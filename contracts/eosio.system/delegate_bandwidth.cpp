@@ -36,11 +36,12 @@ namespace eosiosystem {
       asset         net_weight;
       asset         cpu_weight;
       int64_t       ram_bytes = 0;
+      int64_t       governance_stake = 0;
 
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
+      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake) )
    };
 
 
@@ -71,6 +72,16 @@ namespace eosiosystem {
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
    };
+   
+   struct governance_unstake_request {
+      account_name  owner;
+      time          request_time;
+      int64_t       unstake_amount = 0;
+
+      uint64_t  primary_key()const { return owner; }
+
+      EOSLIB_SERIALIZE( governance_unstake_request, (owner)(request_time)(unstake_amount) )
+   };
 
    /**
     *  These tables are designed to be constructed in the scope of the relevant user, this
@@ -79,6 +90,7 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
    typedef eosio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
    typedef eosio::multi_index< N(refunds), refund_request>      refunds_table;
+   typedef eosio::multi_index< N(unstake), governance_unstake_request>      governance_unstake_table;
 
 
 
@@ -422,5 +434,48 @@ namespace eosiosystem {
       refunds_tbl.erase( req );
    }
 
+
+   void system_contract::governance_stake(account_name payer, account_name receiver, asset tokens) {
+      require_auth( payer );
+      eosio_assert( tokens.amount > 0, "must stake a positive amount GOC" );
+
+
+      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer,N(active)},
+         { payer, N(eosio.stake), tokens, std::string("stake goc") } );
+
+      user_resources_table  userres( _self, receiver );
+      auto res_itr = userres.find( receiver );
+      if( res_itr ==  userres.end() ) {
+         res_itr = userres.emplace( receiver, [&]( auto& res ) {
+               res.owner = receiver;
+               res.governance_stake = tokens.amount;
+            });
+      } else {
+         userres.modify( res_itr, receiver, [&]( auto& res ) {
+               res.governance_stake += tokens.amount;
+            });
+      }
+   }
+
+   void system_contract::governance_unstake(account_name account, asset tokens) {
+      require_auth( account );
+      eosio_assert( tokens.amount > 0, "cannot unstake negative amount GOC" );
+
+      user_resources_table  userres( _self, account );
+      auto res_itr = userres.find( account );
+      eosio_assert( res_itr != userres.end(), "no resource row" );
+      eosio_assert( res_itr->governance_stake >= tokens.amount, "insufficient quota" );
+
+      asset tokens_out = asset(tokens.amount, CORE_SYMBOL);
+
+      userres.modify( res_itr, account, [&]( auto& res ) {
+          res.governance_stake -= tokens.amount;
+      });
+      //set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
+
+      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.stake),N(active)},
+                                                       { N(eosio.stake), account, asset(tokens_out), std::string("unstake GOC") } );
+
+   }
 
 } //namespace eosiosystem

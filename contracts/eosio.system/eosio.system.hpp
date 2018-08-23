@@ -187,6 +187,11 @@ namespace eosiosystem {
           */
          void sellram( account_name receiver, int64_t bytes );
 
+
+         void governance_stake( account_name buyer, account_name receiver, asset tokens );
+         void governance_unstake( account_name receiver, asset tokens );
+
+
          /**
           *  This action is called after the delegation-period to claim all pending
           *  unstaked tokens belonging to owner

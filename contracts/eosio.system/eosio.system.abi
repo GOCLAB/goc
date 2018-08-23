@@ -158,6 +158,21 @@
          {"name":"quant", "type":"asset"}
       ]
     },{
+      "name": "governance_stake",
+      "base": "",
+      "fields": [
+         {"name":"payer", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"tokens", "type":"asset"}
+      ]
+    },{
+      "name": "governance_unstake",
+      "base": "",
+      "fields": [
+         {"name":"receiver", "type":"account_name"},
+         {"name":"tokens", "type":"asset"}
+      ]
+    },{
       "name": "delegatebw",
       "base": "",
       "fields": [
@@ -198,7 +213,8 @@
          {"name":"owner", "type":"account_name"},
          {"name":"net_weight", "type":"asset"},
          {"name":"cpu_weight", "type":"asset"},
-         {"name":"ram_bytes", "type":"uint64"}
+         {"name":"ram_bytes", "type":"uint64"},
+         {"name":"governance_stake", "type":"uint64"}
       ]
     },{
       "name": "total_resources",
@@ -453,6 +469,14 @@
    },{
       "name": "sellram",
       "type": "sellram",
+      "ricardian_contract": ""
+   },{
+      "name": "governance_stake",
+      "type": "governance_stake",
+      "ricardian_contract": ""
+   },{
+      "name": "governance_unstake",
+      "type": "governance_unstake",
       "ricardian_contract": ""
    },{
       "name": "delegatebw",
