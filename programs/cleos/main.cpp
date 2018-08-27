@@ -514,6 +514,15 @@ chain::action create_buyrambytes(const name& creator, const name& newaccount, ui
                         config::system_account_name, N(buyrambytes), act_payload);
 }
 
+chain::action create_governance_stake(const name& creator, const name& newaccount, const asset& quantity) {
+   fc::variant act_payload = fc::mutable_variant_object()
+         ("payer", creator.to_string())
+         ("receiver", newaccount.to_string())
+         ("quant", quantity.to_string());
+   return create_action(tx_permission.empty() ? vector<chain::permission_level>{{creator,config::active_name}} : get_account_permissions(tx_permission),
+                        config::system_account_name, N(governance_stake), act_payload);
+}
+
 chain::action create_delegate(const name& from, const name& receiver, const asset& net, const asset& cpu, bool transfer) {
    fc::variant act_payload = fc::mutable_variant_object()
          ("from", from.to_string())
@@ -1155,6 +1164,80 @@ struct get_transaction_id_subcommand {
             auto trx = trx_var.as<transaction>();
             std::cout << string(trx.id()) << std::endl;
          } EOS_RETHROW_EXCEPTIONS(transaction_type_exception, "Fail to parse transaction JSON '${data}'", ("data",trx_to_check))
+      });
+   }
+};
+
+struct stake_governance_subcommand {
+   string from_str;
+   string stake_amount;
+
+    stake_governance_subcommand(CLI::App* actionRoot) {
+        auto governance_stake = actionRoot->add_subcommand("stakegovernance", localized("Stake for Governance"));
+        governance_stake->add_option("payer", from_str, localized("The account staking for Governance"))->required();
+        governance_stake->add_option("amount", stake_amount, localized("The amount of EOS to stake for Governance"))->required();
+        add_standard_transaction_options(governance_stake);
+        governance_stake->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+            ("payer", from_str)
+            ("quant", to_asset(stake_amount));
+            send_actions({create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(gocstake), act_payload)});            
+        });
+
+    }
+};
+
+struct unstake_governance_subcommand {
+   string receiver_str;
+   string amount;
+
+   unstake_governance_subcommand(CLI::App* actionRoot) {
+      auto governance_unstake = actionRoot->add_subcommand("unstakegovernance", localized("Unstake for Governance"));
+      governance_unstake->add_option("receiver", receiver_str, localized("The account to receive EOS for unstake governance"))->required();
+      governance_unstake->add_option("amount", amount, localized("The amount of EOS to unstake"))->required();
+      add_standard_transaction_options(governance_unstake);
+      governance_unstake->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+               ("receiver", receiver_str)
+               ("quant", to_asset(amount));
+            send_actions({create_action({permission_level{receiver_str,config::active_name}}, config::system_account_name, N(gocunstake), act_payload)});
+         });
+   }
+};
+
+struct list_gstake_subcommand {
+   eosio::name account;
+   bool print_json = false;
+
+   list_gstake_subcommand(CLI::App* actionRoot) {
+      auto list_gs = actionRoot->add_subcommand("displaygstake", localized("Display governance stake"));
+      list_gs->add_option("account", account, localized("The account governance stake"))->required();
+      list_gs->add_flag("--json,-j", print_json, localized("Output in JSON format") );
+
+      list_gs->set_callback([this] {
+            //get entire table in scope of user account
+            auto result = call(get_table_func, fc::mutable_variant_object("json", true)
+                               ("code", name(config::system_account_name).to_string())
+                               ("scope", account.to_string())
+                               ("table", "userres")
+            );
+            if (!print_json) {
+               auto res = result.as<eosio::chain_apis::read_only::get_table_rows_result>();
+               if ( !res.rows.empty() ) {
+                  std::cout << std::setw(13) << std::left << "Owner" 
+                            << std::setw(21) << std::left << "Governance stake"
+                            << std::endl;
+                  for ( auto& r : res.rows ){
+                     std::cout << std::setw(13) << std::left << r["owner"].as_string()
+                               << std::setw(21) << std::left << r["governance_stake"].as_string()
+                               << std::endl;
+                  }
+               } else {
+                  std::cerr << "Governance stake not found" << std::endl;
+               }
+            } else {
+               std::cout << fc::json::to_pretty_string(result) << std::endl;
+            }
       });
    }
 };
@@ -2981,6 +3064,11 @@ int main( int argc, char** argv ) {
 
    auto biyram = buyram_subcommand(system);
    auto sellram = sellram_subcommand(system);
+
+   auto gocStake = stake_governance_subcommand(system);
+   auto gocUnstake = unstake_governance_subcommand(system);
+
+   auto listGovernanceStake = list_gstake_subcommand(system);
 
    auto claimRewards = claimrewards_subcommand(system);
 

@@ -435,46 +435,47 @@ namespace eosiosystem {
    }
 
 
-   void system_contract::governance_stake(account_name payer, account_name receiver, asset tokens) {
+   void system_contract::gocstake(account_name payer, asset quant) {
       require_auth( payer );
-      eosio_assert( tokens.amount > 0, "must stake a positive amount GOC" );
+      eosio_assert( quant.amount > 0, "must stake a positive amount GOC" );
 
 
+      // need add goc.gstake for tokens. now using eosio.stake.
       INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer,N(active)},
-         { payer, N(eosio.stake), tokens, std::string("stake goc") } );
+         { payer, N(eosio.stake), quant, std::string("stake goc") } );
 
-      user_resources_table  userres( _self, receiver );
-      auto res_itr = userres.find( receiver );
+      user_resources_table  userres( _self, payer );
+      auto res_itr = userres.find( payer );
       if( res_itr ==  userres.end() ) {
-         res_itr = userres.emplace( receiver, [&]( auto& res ) {
-               res.owner = receiver;
-               res.governance_stake = tokens.amount;
+         res_itr = userres.emplace( payer, [&]( auto& res ) {
+               res.owner = payer;
+               res.governance_stake = quant.amount;
             });
       } else {
-         userres.modify( res_itr, receiver, [&]( auto& res ) {
-               res.governance_stake += tokens.amount;
+         userres.modify( res_itr, payer, [&]( auto& res ) {
+               res.governance_stake += quant.amount;
             });
       }
    }
 
-   void system_contract::governance_unstake(account_name account, asset tokens) {
-      require_auth( account );
-      eosio_assert( tokens.amount > 0, "cannot unstake negative amount GOC" );
+   void system_contract::gocunstake(account_name receiver, asset quant) {
+      require_auth( receiver );
+      eosio_assert( quant.amount > 0, "cannot unstake negative amount GOC" );
 
-      user_resources_table  userres( _self, account );
-      auto res_itr = userres.find( account );
+      user_resources_table  userres( _self, receiver );
+      auto res_itr = userres.find( receiver );
+      
       eosio_assert( res_itr != userres.end(), "no resource row" );
-      eosio_assert( res_itr->governance_stake >= tokens.amount, "insufficient quota" );
+      eosio_assert( res_itr->governance_stake >= quant.amount, "insufficient quota" );
 
-      asset tokens_out = asset(tokens.amount, CORE_SYMBOL);
+      asset tokens_out = asset(quant.amount, CORE_SYMBOL);
 
-      userres.modify( res_itr, account, [&]( auto& res ) {
-          res.governance_stake -= tokens.amount;
+      userres.modify( res_itr, receiver, [&]( auto& res ) {
+          res.governance_stake -= quant.amount;
       });
-      //set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
 
       INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.stake),N(active)},
-                                                       { N(eosio.stake), account, asset(tokens_out), std::string("unstake GOC") } );
+                                                       { N(eosio.stake), receiver, asset(tokens_out), std::string("unstake GOC") } );
 
    }
 

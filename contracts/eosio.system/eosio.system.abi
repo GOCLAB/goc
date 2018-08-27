@@ -158,19 +158,18 @@
          {"name":"quant", "type":"asset"}
       ]
     },{
-      "name": "governance_stake",
+      "name": "gocstake",
       "base": "",
       "fields": [
          {"name":"payer", "type":"account_name"},
-         {"name":"receiver", "type":"account_name"},
-         {"name":"tokens", "type":"asset"}
+         {"name":"quant", "type":"asset"}
       ]
     },{
-      "name": "governance_unstake",
+      "name": "gocunstake",
       "base": "",
       "fields": [
          {"name":"receiver", "type":"account_name"},
-         {"name":"tokens", "type":"asset"}
+         {"name":"quant", "type":"asset"}
       ]
     },{
       "name": "delegatebw",
@@ -471,12 +470,12 @@
       "type": "sellram",
       "ricardian_contract": ""
    },{
-      "name": "governance_stake",
-      "type": "governance_stake",
+      "name": "gocstake",
+      "type": "gocstake",
       "ricardian_contract": ""
    },{
-      "name": "governance_unstake",
-      "type": "governance_unstake",
+      "name": "gocunstake",
+      "type": "gocunstake",
       "ricardian_contract": ""
    },{
       "name": "delegatebw",
