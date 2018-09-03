@@ -1211,6 +1211,7 @@ struct create_governance_proposal_subcommand {
     string name;
     string content;
     string url;
+    uint16_t start_type=0;
 
 
     create_governance_proposal_subcommand(CLI::App* actionRoot) {
@@ -1220,15 +1221,19 @@ struct create_governance_proposal_subcommand {
         create_proposal->add_option("name", name, localized("The name of created proposal"))->required();
         create_proposal->add_option("content", content, localized("The content of created proposal"))->required();
         create_proposal->add_option("url", url, localized("The url of created proposal"))->required();
-
+        create_proposal->add_option("--start-type", start_type, localized("Set start type, 1 for start vote, 2 for start bp vote(DEBUG)"));
         add_standard_transaction_options(create_proposal);
+        // only allow 0,1,2 here
+        if( start_type > 2)
+            start_type = 0;
         create_proposal->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
                ("owner", owner_str)
                ("fee", to_asset(fee))
                ("pname", name)
                ("pcontent", content)
-               ("url", url);
+               ("url", url)
+               ("start_type", start_type);
             send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocnewprop), act_payload)});
          });
 
@@ -1259,6 +1264,29 @@ struct update_governance_proposal_subcommand {
                ("pcontent", content)
                ("url", url);
             send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocupprop), act_payload)});
+         });
+
+    }
+
+};
+
+struct vote_governance_proposal_subcommand {
+    string owner_str;
+    string id;
+    string vote;
+
+    vote_governance_proposal_subcommand(CLI::App* actionRoot) {
+        auto vote_proposal = actionRoot->add_subcommand("voteproposal", localized("Vote governance proposal"));
+        vote_proposal->add_option("owner", owner_str, localized("The voting user"))->required();
+        vote_proposal->add_option("id", id, localized("The id of voting proposal"))->required();
+        vote_proposal->add_option("vote", vote, localized("Vote of voting proposal"))->required();
+        add_standard_transaction_options(vote_proposal);
+        vote_proposal->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+               ("owner", owner_str)
+               ("id", id)
+               ("vote", vote);
+            send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocvote), act_payload)});
          });
 
     }
@@ -3131,7 +3159,9 @@ int main( int argc, char** argv ) {
    auto gocnp = create_governance_proposal_subcommand(system);
    auto gocup = update_governance_proposal_subcommand(system);
 
-   auto listGovernanceStake = list_gstake_subcommand(system);
+   auto gocvote = vote_governance_proposal_subcommand(system)
+
+;   auto listGovernanceStake = list_gstake_subcommand(system);
 
    auto claimRewards = claimrewards_subcommand(system);
 

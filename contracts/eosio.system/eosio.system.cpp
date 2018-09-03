@@ -15,7 +15,6 @@ namespace eosiosystem {
     _voters(_self,_self),
     _producers(_self,_self),
     _gocproposals(_self,_self),
-    _gocvotes(_self,_self),
     _global(_self,_self),
     _rammarket(_self,_self)
    {
@@ -199,6 +198,6 @@ EOSIO_ABI( eosiosystem::system_contract,
      // producer_pay.cpp
      (onblock)(claimrewards)
      // governance.cpp
-     (gocnewprop)(gocupprop)
+     (gocnewprop)(gocupprop)(gocvote)
      //(voteproposal)
 )

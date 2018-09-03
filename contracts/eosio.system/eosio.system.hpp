@@ -135,32 +135,35 @@ namespace eosiosystem {
 
       double                total_yeas;
       double                total_nays;
+      double                bp_nays;
 
-      uint64_t primary_key()const { return id; }
-      uint32_t    by_starttime()const    { return vote_starttime.utc_seconds;  }
-      double  by_yea_votes()const    { return total_yeas;  }
-      double  by_nay_votes()const    { return total_nays;  }
-      bool    pass()const            { return total_yeas > total_nays;  }
+      uint64_t  primary_key()const     { return id; }
+      uint32_t  by_starttime()const    { return vote_starttime.utc_seconds;  }
+      double    by_yea_votes()const    { return total_yeas;  }
+      double    by_nay_votes()const    { return total_nays;  }
+      bool      vote_pass()const       { return total_yeas > total_nays;  }
+      //need change to bp count
+      bool      bp_pass()const         { return bp_nays < 7.0;  }
+
 
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
                             (create_time)(vote_starttime)(bp_vote_starttime)
-                            (total_yeas)(total_nays) 
+                            (total_yeas)(total_nays)
+                            (bp_nays)
                             )
    };
 
    struct goc_vote_info {
-     uint64_t               id;
      account_name           owner;
-     uint64_t               proposal_id;
      bool                   vote;
+     bool                   bp;
      eosio::time_point_sec  vote_time;
+     eosio::time_point_sec  vote_update_time;
 
-     uint64_t primary_key()const { return id; }
+     uint64_t primary_key()const { return owner; }
 
-     EOSLIB_SERIALIZE(goc_vote_info, (id)(owner)(proposal_id)(vote)(vote_time))     
+     EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(bp)(vote_time)(vote_update_time))     
    };
-
-
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
 
@@ -189,7 +192,6 @@ namespace eosiosystem {
          voters_table           _voters;
          producers_table        _producers;
          goc_proposals_table    _gocproposals;
-         goc_votes_table        _gocvotes;
          global_state_singleton _global;
 
          eosio_global_state     _gstate;
@@ -251,11 +253,12 @@ namespace eosiosystem {
 
          void gocstake( account_name payer, asset tokens );
          void gocunstake( account_name receiver, asset tokens );
-
-         void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url );
+        // start_type: 0:normal, 1:skip waiting, 2:skip user vote, only for debug
+         void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, uint16_t start_type);
          void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url );
 
-         //void voteproposal( account_name voter, bool yea );
+         void gocvote( account_name voter, uint64_t id, bool yea );
+         void gocbpvote( account_name bp, uint64_t id, bool yea );
 
          
 

@@ -179,7 +179,8 @@
          {"name":"fee", "type":"asset"},
          {"name":"pname", "type":"string"},
          {"name":"pcontent", "type":"string"},
-         {"name":"url", "type":"string"}
+         {"name":"url", "type":"string"},
+         {"name":"start_type", "type":"uint16"}
       ]
     },{
       "name": "gocupprop",
@@ -190,6 +191,14 @@
          {"name":"pname", "type":"string"},
          {"name":"pcontent", "type":"string"},
          {"name":"url", "type":"string"}
+      ]
+    },{
+      "name": "gocvote",
+      "base": "",
+      "fields": [
+         {"name":"owner", "type":"account_name"},
+         {"name":"id", "type":"uint64"},         
+         {"name":"vote", "type":"bool"}
       ]
     },{
       "name": "delegatebw",
@@ -381,11 +390,11 @@
       "name": "goc_vote_info",
       "base": "",
       "fields": [
-        {"name":"id",                   "type":"uint64"},
         {"name":"owner",                "type":"account_name"},
-        {"name":"proposal_id",          "type":"uint64"},
         {"name":"vote",                 "type":"bool"},
-        {"name":"vote_time",            "type":"time_point_sec"}
+        {"name":"bp",                   "type":"bool"},
+        {"name":"vote_time",            "type":"time_point_sec"},
+        {"name":"vote_update_time",     "type":"time_point_sec"}
       ]
     },{
       "name": "claimrewards",
@@ -537,6 +546,10 @@
       "type": "gocupprop",
       "ricardian_contract": ""
    },{
+      "name": "gocvote",
+      "type": "gocvote",
+      "ricardian_contract": ""
+   },{
       "name": "delegatebw",
       "type": "delegatebw",
       "ricardian_contract": ""
@@ -639,8 +652,8 @@
       "name": "votes",
       "type": "goc_vote_info",
       "index_type": "i64",
-      "key_names" : ["id"],
-      "key_types" : ["uint64"]
+      "key_names" : ["owner"],
+      "key_types" : ["account_name"]
     },{
       "name": "delband",
       "type": "delegated_bandwidth",
