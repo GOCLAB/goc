@@ -1193,8 +1193,8 @@ struct unstake_governance_subcommand {
 
    unstake_governance_subcommand(CLI::App* actionRoot) {
       auto governance_unstake = actionRoot->add_subcommand("unstakegovernance", localized("Unstake for Governance"));
-      governance_unstake->add_option("receiver", receiver_str, localized("The account to receive EOS for unstake governance"))->required();
-      governance_unstake->add_option("amount", amount, localized("The amount of EOS to unstake"))->required();
+      governance_unstake->add_option("receiver", receiver_str, localized("The account to receive GOC for unstake governance"))->required();
+      governance_unstake->add_option("amount", amount, localized("The amount of GOC to unstake"))->required();
       add_standard_transaction_options(governance_unstake);
       governance_unstake->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
@@ -1203,6 +1203,66 @@ struct unstake_governance_subcommand {
             send_actions({create_action({permission_level{receiver_str,config::active_name}}, config::system_account_name, N(gocunstake), act_payload)});
          });
    }
+};
+
+struct create_governance_proposal_subcommand {
+    string owner_str;
+    string fee;
+    string name;
+    string content;
+    string url;
+
+
+    create_governance_proposal_subcommand(CLI::App* actionRoot) {
+        auto create_proposal = actionRoot->add_subcommand("createproposal", localized("Create governance proposal"));
+        create_proposal->add_option("owner", owner_str, localized("The owner of created proposal"))->required();
+        create_proposal->add_option("fee", fee, localized("The amount of GOC for create proposal"))->required();
+        create_proposal->add_option("name", name, localized("The name of created proposal"))->required();
+        create_proposal->add_option("content", content, localized("The content of created proposal"))->required();
+        create_proposal->add_option("url", url, localized("The url of created proposal"))->required();
+
+        add_standard_transaction_options(create_proposal);
+        create_proposal->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+               ("owner", owner_str)
+               ("fee", to_asset(fee))
+               ("pname", name)
+               ("pcontent", content)
+               ("url", url);
+            send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocnewprop), act_payload)});
+         });
+
+    }
+
+};
+
+struct update_governance_proposal_subcommand {
+    string owner_str;
+    string id;
+    string name;
+    string content;
+    string url;
+
+    update_governance_proposal_subcommand(CLI::App* actionRoot) {
+        auto update_proposal = actionRoot->add_subcommand("updateproposal", localized("Update governance proposal"));
+        update_proposal->add_option("owner", owner_str, localized("The owner of updating proposal"))->required();
+        update_proposal->add_option("id", id, localized("The id of updating proposal"))->required();
+        update_proposal->add_option("name", name, localized("The name of updating proposal"))->required();
+        update_proposal->add_option("content", content, localized("The content of updating proposal"))->required();
+        update_proposal->add_option("url", url, localized("The url of updating proposal"))->required();
+        add_standard_transaction_options(update_proposal);
+        update_proposal->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+               ("owner", owner_str)
+               ("id", id)
+               ("pname", name)
+               ("pcontent", content)
+               ("url", url);
+            send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocupprop), act_payload)});
+         });
+
+    }
+
 };
 
 struct list_gstake_subcommand {
@@ -3067,6 +3127,9 @@ int main( int argc, char** argv ) {
 
    auto gocStake = stake_governance_subcommand(system);
    auto gocUnstake = unstake_governance_subcommand(system);
+
+   auto gocnp = create_governance_proposal_subcommand(system);
+   auto gocup = update_governance_proposal_subcommand(system);
 
    auto listGovernanceStake = list_gstake_subcommand(system);
 

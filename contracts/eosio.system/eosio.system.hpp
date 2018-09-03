@@ -53,12 +53,21 @@ namespace eosiosystem {
       double               total_producer_vote_weight = 0; /// the sum of all producer votes
       block_timestamp      last_name_close;
 
+      //GOC parameters
+      int64_t              goc_proposal_fee_limit=1000000;
+      int64_t              goc_stake_limit=10000;
+      uint32_t             goc_governance_vote_period = 24 * 3600 * 7;
+      uint32_t             goc_bp_vote_period = 24 * 3600 * 7;
+      uint32_t             goc_vote_start_time = 12 * 3600;  // vote start at 12:00PM
+
+
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE_DERIVED( eosio_global_state, eosio::blockchain_parameters,
                                 (max_ram_size)(total_ram_bytes_reserved)(total_ram_stake)
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
-                                (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) )
+                                (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
+                                (goc_proposal_fee_limit)(goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time) )
    };
 
    struct producer_info {
@@ -112,12 +121,62 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
    };
 
+   struct goc_proposal_info {
+      uint64_t          id;
+      account_name          owner;
+      asset                 fee;
+      std::string           proposal_name;
+      std::string           proposal_content;
+      std::string           url;
+
+      eosio::time_point_sec        create_time;
+      eosio::time_point_sec        vote_starttime;
+      eosio::time_point_sec        bp_vote_starttime;
+
+      double                total_yeas;
+      double                total_nays;
+
+      uint64_t primary_key()const { return id; }
+      uint32_t    by_starttime()const    { return vote_starttime.utc_seconds;  }
+      double  by_yea_votes()const    { return total_yeas;  }
+      double  by_nay_votes()const    { return total_nays;  }
+      bool    pass()const            { return total_yeas > total_nays;  }
+
+      EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
+                            (create_time)(vote_starttime)(bp_vote_starttime)
+                            (total_yeas)(total_nays) 
+                            )
+   };
+
+   struct goc_vote_info {
+     uint64_t               id;
+     account_name           owner;
+     uint64_t               proposal_id;
+     bool                   vote;
+     eosio::time_point_sec  vote_time;
+
+     uint64_t primary_key()const { return id; }
+
+     EOSLIB_SERIALIZE(goc_vote_info, (id)(owner)(proposal_id)(vote)(vote_time))     
+   };
+
+
+
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
 
 
    typedef eosio::multi_index< N(producers), producer_info,
                                indexed_by<N(prototalvote), const_mem_fun<producer_info, double, &producer_info::by_votes>  >
                                >  producers_table;
+
+   typedef eosio::multi_index< N(proposals), goc_proposal_info
+                               //,
+                               //indexed_by<N(by_starttime), const_mem_fun<goc_proposal_info, uint32_t, &goc_proposal_info::by_starttime>  >,
+                               //indexed_by<N(by_yea), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_yea_votes>  >,
+                               //indexed_by<N(by_nay), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_nay_votes>  >
+                               > goc_proposals_table;
+
+   typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
@@ -129,6 +188,8 @@ namespace eosiosystem {
       private:
          voters_table           _voters;
          producers_table        _producers;
+         goc_proposals_table    _gocproposals;
+         goc_votes_table        _gocvotes;
          global_state_singleton _global;
 
          eosio_global_state     _gstate;
@@ -190,6 +251,14 @@ namespace eosiosystem {
 
          void gocstake( account_name payer, asset tokens );
          void gocunstake( account_name receiver, asset tokens );
+
+         void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url );
+         void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url );
+
+         //void voteproposal( account_name voter, bool yea );
+
+         
+
 
 
          /**

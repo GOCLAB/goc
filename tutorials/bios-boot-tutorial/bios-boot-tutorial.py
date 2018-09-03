@@ -26,6 +26,8 @@ systemAccounts = [
     'eosio.stake',
     'eosio.token',
     'eosio.vpay',
+    'eosio.gpfee',
+    'eosio.gstake',
 ]
 
 def jsonArg(a):
@@ -117,7 +119,8 @@ def startNode(nodeIndex, account):
         '    --p2p-max-nodes-per-host ' + str(maxClients) +
         '    --enable-stale-production'
         '    --producer-name ' + account['name'] +
-        '    --private-key \'["' + account['pub'] + '","' + account['pvt'] + '"]\''
+        '    --signature-provider=' + account['pub'] + '=KEY:' + account['pvt'] +
+        '    --verbose-http-errors'
         '    --plugin eosio::http_plugin'
         '    --plugin eosio::chain_api_plugin'
         '    --plugin eosio::producer_plugin' +
@@ -356,12 +359,12 @@ parser.add_argument('--genesis', metavar='', help="Path to genesis.json", defaul
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
 parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
-parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=3000)
+parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=100)
 parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=10)
 parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.1)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=10)
-parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=0)
+parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=4)
 parser.add_argument('--min-producer-funds', metavar='', help="Minimum producer funds", type=float, default=1000.0000)
 parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=20)
 parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=10)

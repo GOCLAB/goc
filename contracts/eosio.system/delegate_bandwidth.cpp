@@ -129,7 +129,7 @@ namespace eosiosystem {
       // quant_after_fee.amount should be > 0 if quant.amount > 1.
       // If quant.amount == 1, then quant_after_fee.amount == 0 and the next inline transfer will fail causing the buyram action to fail.
 
-      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer,N(active)},
+      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer, N(active)},
          { payer, N(eosio.ram), quant_after_fee, std::string("buy ram") } );
 
       if( fee.amount > 0 ) {
@@ -437,12 +437,13 @@ namespace eosiosystem {
 
    void system_contract::gocstake(account_name payer, asset quant) {
       require_auth( payer );
+      eosio_assert( quant.symbol == asset().symbol, "must be system token" );
       eosio_assert( quant.amount > 0, "must stake a positive amount GOC" );
 
 
       // need add goc.gstake for tokens. now using eosio.stake.
       INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer,N(active)},
-         { payer, N(eosio.stake), quant, std::string("stake goc") } );
+         { payer, N(eosio.gstake), quant, std::string("stake goc") } );
 
       user_resources_table  userres( _self, payer );
       auto res_itr = userres.find( payer );
@@ -460,6 +461,7 @@ namespace eosiosystem {
 
    void system_contract::gocunstake(account_name receiver, asset quant) {
       require_auth( receiver );
+      eosio_assert( quant.symbol == asset().symbol, "must be system token" );
       eosio_assert( quant.amount > 0, "cannot unstake negative amount GOC" );
 
       user_resources_table  userres( _self, receiver );
@@ -474,8 +476,8 @@ namespace eosiosystem {
           res.governance_stake -= quant.amount;
       });
 
-      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.stake),N(active)},
-                                                       { N(eosio.stake), receiver, asset(tokens_out), std::string("unstake GOC") } );
+      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.gstake),N(active)},
+                                                       { N(eosio.gstake), receiver, asset(tokens_out), std::string("unstake GOC") } );
 
    }
 
