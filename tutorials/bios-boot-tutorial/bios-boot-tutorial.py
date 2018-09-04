@@ -40,6 +40,12 @@ def run(args):
         print('bios-boot-tutorial.py: exiting because of error')
         sys.exit(1)
 
+def runIgnoreError(args):
+    print('bios-boot-tutorial.py:', args)
+    logFile.write(args + '\n')
+    if subprocess.call(args, shell=True):
+        print('bios-boot-tutorial.py: SOMETHING ERROR AND GO NEXT')
+
 def retry(args):
     while True:
         print('bios-boot-tutorial.py:', args)
@@ -118,6 +124,7 @@ def startNode(nodeIndex, account):
         '    --max-clients ' + str(maxClients) +
         '    --p2p-max-nodes-per-host ' + str(maxClients) +
         '    --enable-stale-production'
+        '    --max-transaction-time=1000'
         '    --producer-name ' + account['name'] +
         '    --signature-provider=' + account['pub'] + '=KEY:' + account['pvt'] +
         '    --verbose-http-errors'
@@ -179,10 +186,27 @@ def createStakedAccounts(b, e):
         if unstaked:
             retry(args.cleos + 'transfer eosio %s "%s"' % (a['name'], intToCurrency(unstaked)))
 
+def createGocStakedAccounts(b, e):
+    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % "200000.0000 SYS")
+    for i in range(b, e):
+        a = accounts[i]
+        run(args.cleos + 'transfer eosio %s "2000.0000 SYS"' % (a['name']))
+        run(args.cleos + 'system gocstake %s "1000.0 SYS" ' % (a['name']))
+
+def createGocProposals(b, e):
+    for i in range(b, e):
+        a = accounts[i]
+        run(args.cleos + 'system createproposal %s "1000.0000 SYS" a%s b%s c%s --start-type %s' % (a['name'], i, i, i, i%3))
+
+def createGocVotes(b):
+    for i in range(0, b):
+        a = accounts[numpy.random.randint(10)]
+        runIgnoreError(args.cleos + 'system voteproposal %s %s %s ' % (a['name'], numpy.random.randint(10), numpy.random.randint(2)))
+
 def regProducers(b, e):
     for i in range(b, e):
         a = accounts[i]
-        retry(args.cleos + 'system regproducer ' + a['name'] + ' ' + a['pub'] + ' https://' + a['name'] + '.com' + '/' + a['pub'])
+        run(args.cleos + 'system regproducer ' + a['name'] + ' ' + a['pub'] + ' https://' + a['name'] + '.com' + '/' + a['pub'])
 
 def listProducers():
     run(args.cleos + 'get table eosio eosio producers -l 30')
@@ -300,6 +324,10 @@ def stepSetSystemContract():
     run(args.cleos + 'push action eosio setpriv' + jsonArg(['eosio.msig', 1]) + '-p eosio@active')
 def stepCreateStakedAccounts():
     createStakedAccounts(0, len(accounts))
+def stepGOC():
+    createGocStakedAccounts(0, 10)
+    createGocProposals(0, 10)
+    createGocVotes(100)
 def stepRegProducers():
     regProducers(firstProducer, firstProducer + numProducers)
     sleep(1)
@@ -337,6 +365,7 @@ commands = [
     ('t', 'tokens',         stepCreateTokens,           True,    "Create tokens"),
     ('S', 'sys-contract',   stepSetSystemContract,      True,    "Set system contract"),
     ('T', 'stake',          stepCreateStakedAccounts,   True,    "Create staked accounts"),
+    ('g', 'goc',            stepGOC,                    True,    "Prepare goc data"),  
     ('p', 'reg-prod',       stepRegProducers,           True,    "Register producers"),
     ('P', 'start-prod',     stepStartProducers,         True,    "Start producers"),
     ('v', 'vote',           stepVote,                   True,    "Vote for producers"),
@@ -361,13 +390,13 @@ parser.add_argument('--log-path', metavar='', help="Path to log file", default='
 parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
 parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=100)
 parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=10)
-parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.1)
+parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.2)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=1000)
 parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=3)
 parser.add_argument('--min-producer-funds', metavar='', help="Minimum producer funds", type=float, default=1000.0000)
-parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=20)
-parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=10)
+parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=4)
+parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=20)
 parser.add_argument('--num-senders', metavar='', help="Number of users to transfer funds randomly", type=int, default=10)
 parser.add_argument('--producer-sync-delay', metavar='', help="Time (s) to sleep to allow producers to sync", type=int, default=80)
 parser.add_argument('-a', '--all', action='store_true', help="Do everything marked with (*)")

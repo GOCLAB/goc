@@ -161,6 +161,12 @@ namespace eosiosystem
 
         //User need stake for vote
 
+        user_resources_table userres(_self, voter);
+        auto res_itr = userres.find(voter);
+
+        eosio_assert(res_itr != userres.end(), "no resource row");
+        eosio_assert(res_itr->governance_stake.amount >= _gstate.goc_stake_limit, "insufficient stake for voting");
+
         //TODO:maybe need fee to run for avoid attacking
 
         //the votes table for pid
