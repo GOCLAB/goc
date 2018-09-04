@@ -153,14 +153,11 @@ namespace eosiosystem
     {
         require_auth(voter);
 
-        eosio::print("Voting by ", name{voter}, " @", now(), "\n");
-
-
         const auto &proposal_voting = _gocproposals.get(pid, "proposal not exist");
 
         //User vote time, bp vote as normal user
-        eosio_assert(proposal_voting.vote_starttime.utc_seconds < eosio::time_point_sec(now()), "proposal voting not yet started”");
-        eosio_assert(proposal_voting.bp_vote_starttime.utc_seconds > eosio::time_point_sec(now()), "proposal voting expired");
+        eosio_assert(proposal_voting.vote_starttime < eosio::time_point_sec(now()), "proposal voting not yet started”");
+        eosio_assert(proposal_voting.bp_vote_starttime > eosio::time_point_sec(now()), "proposal voting expired");
 
         //User need stake for vote
 
@@ -246,7 +243,7 @@ namespace eosiosystem
 
         //bp vote time window
         eosio_assert(proposal_voting.bp_vote_starttime < eosio::time_point_sec(now()), "proposal bp voting not yet started");
-        eosio_assert(proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period > eosio::time_point_sec(now()), "proposal bp voting expired");
+        eosio_assert(proposal_voting.bp_vote_starttime > eosio::time_point_sec(now() - _gstate.goc_bp_vote_period), "proposal bp voting expired");
         
 
         //TODO:maybe need fee to run for avoid attacking
