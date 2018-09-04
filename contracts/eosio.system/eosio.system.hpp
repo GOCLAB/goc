@@ -54,11 +54,12 @@ namespace eosiosystem {
       block_timestamp      last_name_close;
 
       //GOC parameters
-      int64_t              goc_proposal_fee_limit=1000000;
-      int64_t              goc_stake_limit=10000;
-      uint32_t             goc_governance_vote_period = 24 * 3600 * 7;
-      uint32_t             goc_bp_vote_period = 24 * 3600 * 7;
-      uint32_t             goc_vote_start_time = 12 * 3600;  // vote start at 12:00PM
+      int64_t              goc_proposal_fee_limit=  1000000;
+      int64_t              goc_stake_limit = 1000000;
+      int64_t              goc_action_fee = 10;
+      uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
+      uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
+      uint32_t             goc_vote_start_time = 24 * 3600;  // vote start after 24 Hour
 
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
@@ -67,7 +68,7 @@ namespace eosiosystem {
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
-                                (goc_proposal_fee_limit)(goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time) )
+                                (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time) )
    };
 
    struct producer_info {
@@ -145,7 +146,6 @@ namespace eosiosystem {
       //need change to bp count
       bool      bp_pass()const         { return bp_nays < 7.0;  }
 
-
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
                             (create_time)(vote_starttime)(bp_vote_starttime)
                             (total_yeas)(total_nays)
@@ -156,16 +156,16 @@ namespace eosiosystem {
    struct goc_vote_info {
      account_name           owner;
      bool                   vote;
-     bool                   bp;
      eosio::time_point_sec  vote_time;
      eosio::time_point_sec  vote_update_time;
 
      uint64_t primary_key()const { return owner; }
 
-     EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(bp)(vote_time)(vote_update_time))     
+     EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time))     
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
+
 
 
    typedef eosio::multi_index< N(producers), producer_info,
@@ -180,6 +180,8 @@ namespace eosiosystem {
                                > goc_proposals_table;
 
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
+   typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
+
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 

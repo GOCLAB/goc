@@ -36,7 +36,7 @@ namespace eosiosystem {
       asset         net_weight;
       asset         cpu_weight;
       int64_t       ram_bytes = 0;
-      int64_t       governance_stake = 0;
+      asset         governance_stake;
 
       uint64_t primary_key()const { return owner; }
 
@@ -435,50 +435,6 @@ namespace eosiosystem {
    }
 
 
-   void system_contract::gocstake(account_name payer, asset quant) {
-      require_auth( payer );
-      eosio_assert( quant.symbol == asset().symbol, "must be system token" );
-      eosio_assert( quant.amount > 0, "must stake a positive amount GOC" );
 
-
-      // need add goc.gstake for tokens. now using eosio.stake.
-      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {payer,N(active)},
-         { payer, N(eosio.gstake), quant, std::string("stake goc") } );
-
-      user_resources_table  userres( _self, payer );
-      auto res_itr = userres.find( payer );
-      if( res_itr ==  userres.end() ) {
-         res_itr = userres.emplace( payer, [&]( auto& res ) {
-               res.owner = payer;
-               res.governance_stake = quant.amount;
-            });
-      } else {
-         userres.modify( res_itr, payer, [&]( auto& res ) {
-               res.governance_stake += quant.amount;
-            });
-      }
-   }
-
-   void system_contract::gocunstake(account_name receiver, asset quant) {
-      require_auth( receiver );
-      eosio_assert( quant.symbol == asset().symbol, "must be system token" );
-      eosio_assert( quant.amount > 0, "cannot unstake negative amount GOC" );
-
-      user_resources_table  userres( _self, receiver );
-      auto res_itr = userres.find( receiver );
-      
-      eosio_assert( res_itr != userres.end(), "no resource row" );
-      eosio_assert( res_itr->governance_stake >= quant.amount, "insufficient quota" );
-
-      asset tokens_out = asset(quant.amount, CORE_SYMBOL);
-
-      userres.modify( res_itr, receiver, [&]( auto& res ) {
-          res.governance_stake -= quant.amount;
-      });
-
-      INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.gstake),N(active)},
-                                                       { N(eosio.gstake), receiver, asset(tokens_out), std::string("unstake GOC") } );
-
-   }
 
 } //namespace eosiosystem

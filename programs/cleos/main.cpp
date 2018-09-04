@@ -1173,9 +1173,9 @@ struct stake_governance_subcommand {
    string stake_amount;
 
     stake_governance_subcommand(CLI::App* actionRoot) {
-        auto governance_stake = actionRoot->add_subcommand("stakegovernance", localized("Stake for Governance"));
+        auto governance_stake = actionRoot->add_subcommand("gocstake", localized("Stake for Governance"));
         governance_stake->add_option("payer", from_str, localized("The account staking for Governance"))->required();
-        governance_stake->add_option("amount", stake_amount, localized("The amount of EOS to stake for Governance"))->required();
+        governance_stake->add_option("amount", stake_amount, localized("The amount of GOC to stake for Governance"))->required();
         add_standard_transaction_options(governance_stake);
         governance_stake->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
@@ -1192,7 +1192,7 @@ struct unstake_governance_subcommand {
    string amount;
 
    unstake_governance_subcommand(CLI::App* actionRoot) {
-      auto governance_unstake = actionRoot->add_subcommand("unstakegovernance", localized("Unstake for Governance"));
+      auto governance_unstake = actionRoot->add_subcommand("gocunstake", localized("Unstake for Governance"));
       governance_unstake->add_option("receiver", receiver_str, localized("The account to receive GOC for unstake governance"))->required();
       governance_unstake->add_option("amount", amount, localized("The amount of GOC to unstake"))->required();
       add_standard_transaction_options(governance_unstake);
@@ -1275,18 +1275,24 @@ struct vote_governance_proposal_subcommand {
     string id;
     string vote;
 
+    bool bp = false;
+
     vote_governance_proposal_subcommand(CLI::App* actionRoot) {
         auto vote_proposal = actionRoot->add_subcommand("voteproposal", localized("Vote governance proposal"));
         vote_proposal->add_option("owner", owner_str, localized("The voting user"))->required();
         vote_proposal->add_option("id", id, localized("The id of voting proposal"))->required();
         vote_proposal->add_option("vote", vote, localized("Vote of voting proposal"))->required();
+        vote_proposal->add_flag("--bpvote", bp, localized("vote as bp"));
         add_standard_transaction_options(vote_proposal);
         vote_proposal->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
                ("owner", owner_str)
                ("id", id)
                ("vote", vote);
-            send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocvote), act_payload)});
+            if(bp)
+                send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocbpvote), act_payload)});
+            else
+                send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocvote), act_payload)});
          });
 
     }
@@ -1298,7 +1304,7 @@ struct list_gstake_subcommand {
    bool print_json = false;
 
    list_gstake_subcommand(CLI::App* actionRoot) {
-      auto list_gs = actionRoot->add_subcommand("displaygstake", localized("Display governance stake"));
+      auto list_gs = actionRoot->add_subcommand("listgocstake", localized("Display governance stake"));
       list_gs->add_option("account", account, localized("The account governance stake"))->required();
       list_gs->add_flag("--json,-j", print_json, localized("Output in JSON format") );
 
@@ -3159,9 +3165,9 @@ int main( int argc, char** argv ) {
    auto gocnp = create_governance_proposal_subcommand(system);
    auto gocup = update_governance_proposal_subcommand(system);
 
-   auto gocvote = vote_governance_proposal_subcommand(system)
-
-;   auto listGovernanceStake = list_gstake_subcommand(system);
+   auto gocvote = vote_governance_proposal_subcommand(system);
+   
+   auto listGovernanceStake = list_gstake_subcommand(system);
 
    auto claimRewards = claimrewards_subcommand(system);
 

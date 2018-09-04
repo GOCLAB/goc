@@ -27,7 +27,58 @@ namespace eosiosystem
     using eosio::singleton;
     using eosio::transaction;
 
-    void system_contract::gocnewprop(const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, uint16_t start_type)
+    void system_contract::gocstake(account_name payer, asset quant)
+    {
+        require_auth(payer);
+        eosio_assert(quant.symbol == asset().symbol, "must be system token");
+        eosio_assert(quant.amount > 0, "must stake a positive amount GOC");
+
+        // need add goc.gstake for tokens. now using eosio.stake.
+        INLINE_ACTION_SENDER(eosio::token, transfer)
+        (N(eosio.token), {payer, N(active)},
+        {payer, N(eosio.gstake), quant, std::string("stake goc")});
+
+        user_resources_table userres(_self, payer);
+        auto res_itr = userres.find(payer);
+        if (res_itr == userres.end())
+        {
+            res_itr = userres.emplace(payer, [&](auto &res) {
+                res.owner = payer;
+                res.governance_stake = quant;
+            });
+        }
+        else
+        {
+            userres.modify(res_itr, payer, [&](auto &res) {
+                res.governance_stake += quant;
+            });
+        }
+    }
+
+    void system_contract::gocunstake(account_name receiver, asset quant)
+    {
+        require_auth(receiver);
+        eosio_assert(quant.symbol == asset().symbol, "must be system token");
+        eosio_assert(quant.amount > 0, "cannot unstake negative amount GOC");
+
+        user_resources_table userres(_self, receiver);
+        auto res_itr = userres.find(receiver);
+
+        eosio_assert(res_itr != userres.end(), "no resource row");
+        eosio_assert(res_itr->governance_stake >= quant, "insufficient quota");
+
+        asset tokens_out = asset(quant.amount, CORE_SYMBOL);
+
+        userres.modify(res_itr, receiver, [&](auto &res) {
+            res.governance_stake -= quant;
+        });
+
+        INLINE_ACTION_SENDER(eosio::token, transfer)
+        (N(eosio.token), {N(eosio.gstake), N(active)},
+        {N(eosio.gstake), receiver, asset(tokens_out), std::string("unstake GOC")});
+    }
+
+    void system_contract::gocnewprop(const account_name owner, asset fee, const std::string &pname, const std::string &pcontent, const std::string &url, uint16_t start_type)
     {
         require_auth(owner);
 
@@ -38,8 +89,9 @@ namespace eosiosystem
         eosio_assert(fee.amount > _gstate.goc_proposal_fee_limit, "insufficient fee");
 
         //charge proposal fee
-        INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {owner, N(active)},
-         { owner, N(eosio.gpfee), fee, std::string("create proposal") } );
+        INLINE_ACTION_SENDER(eosio::token, transfer)
+        (N(eosio.token), {owner, N(active)},
+        {owner, N(eosio.gpfee), fee, std::string("create proposal")});
 
         uint64_t new_id = _gocproposals.available_primary_key();
 
@@ -52,15 +104,17 @@ namespace eosiosystem
             info.proposal_content = pcontent;
             info.url = url;
             info.create_time = eosio::time_point_sec(now());
-            //TODO: must set to zero hour of today
-            if( start_type == 0 )
-                info.vote_starttime = eosio::time_point_sec(now() + _gstate.goc_vote_start_time);
-            if( start_type == 1 )
+            info.vote_starttime = eosio::time_point_sec(now() + _gstate.goc_vote_start_time);
+            info.bp_vote_starttime = eosio::time_point_sec(now() + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period);
+
+            if (start_type == 1)
                 info.vote_starttime = eosio::time_point_sec(now());
 
-            info.bp_vote_starttime = eosio::time_point_sec(now() + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period);
-            if( start_type == 2 )
+            if (start_type == 2)
+            {// TEST ONLY
+                info.vote_starttime = eosio::time_point_sec(now());
                 info.bp_vote_starttime = eosio::time_point_sec(now());
+            }
             info.total_yeas = 0;
             info.total_nays = 0;
             info.bp_nays = 0;
@@ -69,7 +123,7 @@ namespace eosiosystem
         eosio::print("created propsal ID: ", new_id, "\n");
     }
 
-    void system_contract::gocupprop(const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url)
+    void system_contract::gocupprop(const account_name owner, uint64_t id, const std::string &pname, const std::string &pcontent, const std::string &url)
     {
         require_auth(owner);
 
@@ -77,17 +131,18 @@ namespace eosiosystem
         eosio_assert(pcontent.size() < 1024, "content too long");
         eosio_assert(url.size() < 512, "url too long");
 
-        const auto& proposal_updating = _gocproposals.get( id , "proposal not exist");
+        const auto &proposal_updating = _gocproposals.get(id, "proposal not exist");
 
-        eosio_assert( proposal_updating.vote_starttime > eosio::time_point_sec(now()), "proposal is not available for modify" );
-        eosio_assert( proposal_updating.owner == owner, "only owner can update proposal");
+        eosio_assert(proposal_updating.vote_starttime > eosio::time_point_sec(now()), "proposal is not available for modify");
+        eosio_assert(proposal_updating.owner == owner, "only owner can update proposal");
 
-        //charge little for updating
-        asset fee = asset(10000, CORE_SYMBOL);
-        INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {owner, N(active)},
-         { owner, N(eosio.gpfee), fee, std::string("update proposal") } );
+        //charge little for avoid attacking
+        asset fee = asset(_gstate.goc_action_fee, CORE_SYMBOL);
+        INLINE_ACTION_SENDER(eosio::token, transfer)
+        (N(eosio.token), {owner, N(active)},
+        {owner, N(eosio.gpfee), fee, std::string("update proposal")});
 
-        _gocproposals.modify( proposal_updating, 0, [&]( goc_proposal_info& info ) {
+        _gocproposals.modify(proposal_updating, 0, [&](goc_proposal_info &info) {
             info.proposal_name = pname;
             info.proposal_content = pcontent;
             info.url = url;
@@ -98,59 +153,159 @@ namespace eosiosystem
     {
         require_auth(voter);
 
-        const auto& proposal_voting = _gocproposals.get( pid , "proposal not exist");
+        eosio::print("Voting by ", name{voter}, " @", now(), "\n");
 
-        eosio_assert( proposal_voting.vote_starttime < eosio::time_point_sec(now()), "proposal is not available for voting" );
-        eosio_assert( proposal_voting.bp_vote_starttime > eosio::time_point_sec(now()), "proposal is not available for voting" );
 
-        goc_votes_table votes( _self, pid );
+        const auto &proposal_voting = _gocproposals.get(pid, "proposal not exist");
 
-        auto vote_info = votes.find( voter );
+        //User vote time, bp vote as normal user
+        eosio_assert(proposal_voting.vote_starttime.utc_seconds < eosio::time_point_sec(now()), "proposal voting not yet started”");
+        eosio_assert(proposal_voting.bp_vote_starttime.utc_seconds > eosio::time_point_sec(now()), "proposal voting expired");
 
-        if ( vote_info != votes.end() ) {
+        //User need stake for vote
+
+        //TODO:maybe need fee to run for avoid attacking
+
+        //the votes table for pid
+        goc_votes_table votes(_self, pid);
+
+        auto vote_info = votes.find(voter);
+
+        if (vote_info != votes.end())
+        {
             bool old_vote = vote_info->vote;
 
-            if(yea != old_vote) {
-                eosio::print("updating old vote of ", voter, " ", pid, " ", yea, "\n");
+            if (yea != old_vote)
+            {
+                eosio::print("updating old vote of ", name{voter}, " ", pid, " ", yea, "\n");
 
-                votes.modify( vote_info, 0, [&]( goc_vote_info& info ){
+                votes.modify(vote_info, 0, [&](goc_vote_info &info) {
                     info.vote = yea;
                     info.vote_update_time = eosio::time_point_sec(now());
-                    });
+                });
 
-                _gocproposals.modify(proposal_voting, 0, [&]( goc_proposal_info& info ){              
-                    if(yea) {
+                _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                    if (yea)
+                    {
                         info.total_nays -= 1.0;
                         info.total_yeas += 1.0;
-                    } else {
+                    }
+                    else
+                    {
                         info.total_nays += 1.0;
-                        info.total_yeas -= 1.0;                      
+                        info.total_yeas -= 1.0;
                     }
                 });
-             } else {
-                eosio::print("skip same vote of ", voter, "\n");
-             }
-        } else {
-            eosio::print("creating vote for ", voter, " ", pid, " ", yea, "\n");
+            }
+            else
+            {
+                eosio::print("skip same vote of ", name{voter}, "\n");
+            }
+        }
+        else
+        {
+            eosio::print("creating vote for ", name{voter}, " ", pid, " ", yea, "\n");
 
-            votes.emplace(voter, [&](goc_vote_info& info) {
+            votes.emplace(voter, [&](goc_vote_info &info) {
                 info.owner = voter;
                 info.vote = yea;
-                info.bp = false;
                 info.vote_time = eosio::time_point_sec(now());
                 info.vote_update_time = eosio::time_point_sec(now());
             });
-            _gocproposals.modify(proposal_voting, 0, [&]( goc_proposal_info& info ){              
-                if(yea) {
+            _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                if (yea)
+                {
                     info.total_yeas += 1.0;
-                } else {
+                }
+                else
+                {
                     info.total_nays += 1.0;
                 }
             });
         }
+    }
 
+    void system_contract::gocbpvote(account_name voter, uint64_t pid, bool yea)
+    {
+        require_auth(voter);
+
+        const auto &proposal_voting = _gocproposals.get(pid, "proposal not exist");
+
+        //BP vote time, only bp is allowed, not need for stake.
+        
+        auto idx = _producers.get_index<N(prototalvote)>();
+
+        uint16_t bp_count=0;
+        for ( auto it = idx.cbegin(); it != idx.cend() && bp_count < 21 && 0 < it->total_votes && it->active(); ++it ) {
+            if(it->owner == voter)
+                break;
+            bp_count++;
+        }
+
+        eosio_assert(bp_count < 21 , "only bp can vote");
+
+        //bp vote time window
+        eosio_assert(proposal_voting.bp_vote_starttime < eosio::time_point_sec(now()), "proposal bp voting not yet started");
+        eosio_assert(proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period > eosio::time_point_sec(now()), "proposal bp voting expired");
         
 
+        //TODO:maybe need fee to run for avoid attacking
+
+        //the bp votes table for pid
+        goc_bp_votes_table bpvotes(_self, pid);
+
+        auto vote_info = bpvotes.find(voter);
+
+        if (vote_info != bpvotes.end())
+        {
+            bool old_vote = vote_info->vote;
+
+            if (yea != old_vote)
+            {
+                eosio::print("updating old bp vote of ", name{voter}, " ", pid, " ", yea, "\n");
+
+                bpvotes.modify(vote_info, 0, [&](goc_vote_info &info) {
+                    info.vote = yea;
+                    info.vote_update_time = eosio::time_point_sec(now());
+                });
+
+                _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                    if (yea)
+                    {
+                        info.bp_nays -= 2.0;
+                    }
+                    else
+                    {
+                        info.bp_nays += 2.0;
+                    }
+                });
+            }
+            else
+            {
+                eosio::print("skip same bp vote of ", name{voter}, "\n");
+            }
+        }
+        else
+        {
+            eosio::print("creating bp vote for ", name{voter}, " ", pid, " ", yea, "\n");
+
+            bpvotes.emplace(voter, [&](goc_vote_info &info) {
+                info.owner = voter;
+                info.vote = yea;
+                info.vote_time = eosio::time_point_sec(now());
+                info.vote_update_time = eosio::time_point_sec(now());
+            });
+            _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                if (yea)
+                {
+                    info.bp_nays -= 1.0;
+                }
+                else
+                {
+                    info.bp_nays += 1.0;
+                }
+            });
+        }
     }
 
 } // namespace eosiosystem
