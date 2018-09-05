@@ -314,9 +314,14 @@
          {"name":"last_name_close",               "type":"block_timestamp_type"},
          {"name":"goc_proposal_fee_limit",        "type":"int64"},
          {"name":"goc_stake_limit",               "type":"int64"},
+         {"name":"goc_action_fee",                "type":"int64"},
+         {"name":"goc_max_proposal_reward",       "type":"int64"},
          {"name":"goc_governance_vote_period",    "type":"uint32"},
          {"name":"goc_bp_vote_period",            "type":"uint32"},
-         {"name":"goc_vote_start_time",           "type":"uint32"}
+         {"name":"goc_vote_start_time",           "type":"uint32"},
+         {"name":"goc_voter_bucket",              "type":"int64"},
+         {"name":"goc_gn_bucket",                 "type":"int64"},
+         {"name":"last_gn_bucket_empty",           "type":"uint32"}
       ]
     },{
       "name": "producer_info",
@@ -392,7 +397,8 @@
         {"name":"create_time",          "type":"time_point_sec"},
         {"name":"vote_starttime",       "type":"time_point_sec"},
         {"name":"bp_vote_starttime",    "type":"time_point_sec"},
-        {"name":"settle_time",          "type":"time_point_sec"}
+        {"name":"bp_vote_endtime",      "type":"time_point_sec"},
+        {"name":"settle_time",          "type":"time_point_sec"},
         {"name":"total_yeas",           "type":"float64"},
         {"name":"total_nays",           "type":"float64"},
         {"name":"bp_nays",              "type":"float64"}
@@ -405,6 +411,15 @@
         {"name":"vote",                 "type":"bool"},
         {"name":"vote_time",            "type":"time_point_sec"},
         {"name":"vote_update_time",     "type":"time_point_sec"}
+      ]
+    },{
+      "name": "goc_reward_info",
+      "base": "",
+      "fields": [
+        {"name":"owner",                "type":"account_name"},
+        {"name":"reward_time",          "type":"time_point_sec"},
+        {"name":"proposal_id",          "type":"uint64"},
+        {"name":"rewards",              "type":"asset"}
       ]
     },{
       "name": "claimrewards",
@@ -689,6 +704,12 @@
     },{
       "name": "refunds",
       "type": "refund_request",
+      "index_type": "i64",
+      "key_names" : ["owner"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "rewards",
+      "type": "goc_reward_info",
       "index_type": "i64",
       "key_names" : ["owner"],
       "key_types" : ["uint64"]

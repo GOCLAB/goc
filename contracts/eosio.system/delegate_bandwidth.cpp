@@ -73,16 +73,6 @@ namespace eosiosystem {
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
    };
-   
-   struct governance_unstake_request {
-      account_name  owner;
-      time          request_time;
-      int64_t       unstake_amount = 0;
-
-      uint64_t  primary_key()const { return owner; }
-
-      EOSLIB_SERIALIZE( governance_unstake_request, (owner)(request_time)(unstake_amount) )
-   };
 
    /**
     *  These tables are designed to be constructed in the scope of the relevant user, this
@@ -91,7 +81,7 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
    typedef eosio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
    typedef eosio::multi_index< N(refunds), refund_request>      refunds_table;
-   typedef eosio::multi_index< N(unstake), governance_unstake_request>      governance_unstake_table;
+
 
 
 
@@ -433,9 +423,18 @@ namespace eosiosystem {
                                                     { N(eosio.stake), req->owner, req->net_amount + req->cpu_amount, std::string("unstake") } );
 
       refunds_tbl.erase( req );
+
+      // GOC use this action to send rewards
+
+      goc_rewards_table rewards(_self, owner);
+
+      for(auto& reward : rewards)
+      {
+            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.gocgns),N(active)},
+                                                    { N(eosio.gocgns), owner, reward.rewards, std::string("reward for proposal") } );
+            rewards.erase(reward);
+      }
+
+
    }
-
-
-
-
 } //namespace eosiosystem

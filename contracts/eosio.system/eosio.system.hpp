@@ -57,13 +57,15 @@ namespace eosiosystem {
       int64_t              goc_proposal_fee_limit=  1000000;
       int64_t              goc_stake_limit = 1000000;
       int64_t              goc_action_fee = 10;
+      int64_t              goc_max_proposal_reward = 1000000;
       uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_vote_start_time = 24 * 3600;  // vote start after 24 Hour
       
       int64_t              goc_voter_bucket = 0;
       int64_t              goc_gn_bucket = 0;
-      uint64_t             last_gn_bucket_empty = 0;
+      uint32_t             last_gn_bucket_empty = 0;
+      
 
 
 
@@ -73,7 +75,9 @@ namespace eosiosystem {
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
-                                (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time) )
+                                (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)
+                                (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
+                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty) )
    };
 
    struct producer_info {
@@ -138,6 +142,7 @@ namespace eosiosystem {
       time                  create_time;
       time                  vote_starttime;
       time                  bp_vote_starttime;
+      time                  bp_vote_endtime;
       time                  settle_time = 0;
 
       double                total_yeas;
@@ -145,12 +150,13 @@ namespace eosiosystem {
       double                bp_nays;
 
       uint64_t  primary_key()const     { return id; }
+      uint64_t  by_endtime()const      { return bp_vote_endtime; }
       bool      vote_pass()const       { return total_yeas > total_nays;  }
       //need change to bp count
       bool      bp_pass()const         { return bp_nays < -7.0;  }
 
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
-                            (create_time)(vote_starttime)(bp_vote_starttime)(settle_time)
+                            (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)(settle_time)
                             (total_yeas)(total_nays)
                             (bp_nays)
                             )
@@ -161,10 +167,22 @@ namespace eosiosystem {
      bool                   vote;
      time                   vote_time;
      time                   vote_update_time;
+     time                   settle_time = 0;
 
      uint64_t primary_key()const { return owner; }
 
      EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time))     
+   };
+
+   struct goc_reward_info {
+      account_name  owner;
+      time          reward_time;
+      uint64_t      proposal_id;
+      eosio::asset  rewards = asset(0);
+
+      uint64_t  primary_key()const { return owner; }
+
+      EOSLIB_SERIALIZE( goc_reward_info, (owner)(reward_time)(rewards) )
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
@@ -175,16 +193,15 @@ namespace eosiosystem {
                                indexed_by<N(prototalvote), const_mem_fun<producer_info, double, &producer_info::by_votes>  >
                                >  producers_table;
 
-   typedef eosio::multi_index< N(proposals), goc_proposal_info
-                               //,
-                               //indexed_by<N(by_starttime), const_mem_fun<goc_proposal_info, uint32_t, &goc_proposal_info::by_starttime>  >,
+   typedef eosio::multi_index< N(proposals), goc_proposal_info,
+                               indexed_by<N(byendtime), const_mem_fun<goc_proposal_info, uint64_t, &goc_proposal_info::by_endtime>  >
                                //indexed_by<N(by_yea), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_yea_votes>  >,
                                //indexed_by<N(by_nay), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_nay_votes>  >
                                > goc_proposals_table;
 
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
-
+   typedef eosio::multi_index< N(gocreward), goc_reward_info>      goc_rewards_table;
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 

@@ -30,6 +30,8 @@ namespace eosiosystem
     void system_contract::gocstake(account_name payer, asset quant)
     {
         require_auth(payer);
+        auto time_now = now();
+
         eosio_assert(quant.symbol == asset().symbol, "must be system token");
         eosio_assert(quant.amount > 0, "must stake a positive amount GOC");
 
@@ -45,15 +47,15 @@ namespace eosiosystem
             res_itr = userres.emplace(payer, [&](auto &res) {
                 res.owner = payer;
                 res.governance_stake = quant;
-                res.goc_stake_freeze = now();
+                res.goc_stake_freeze = time_now;
             });
         }
         else
         {
             userres.modify(res_itr, payer, [&](auto &res) {
                 res.governance_stake += quant;
-                if(res_itr->goc_stake_freeze < now())
-                    res.goc_stake_freeze = now();  
+                if(res_itr->goc_stake_freeze < time_now)
+                    res.goc_stake_freeze = time_now;  
             });
         }
     }
@@ -61,6 +63,8 @@ namespace eosiosystem
     void system_contract::gocunstake(account_name receiver, asset quant)
     {
         require_auth(receiver);
+        auto time_now = now();
+
         eosio_assert(quant.symbol == asset().symbol, "must be system token");
         eosio_assert(quant.amount > 0, "cannot unstake negative amount GOC");
 
@@ -69,7 +73,7 @@ namespace eosiosystem
 
         eosio_assert(res_itr != userres.end(), "no resource row");
         eosio_assert(res_itr->governance_stake >= quant, "insufficient quota");
-        eosio_assert(res_itr->goc_stake_freeze < now(), "stake frozen");
+        eosio_assert(res_itr->goc_stake_freeze < time_now, "stake frozen");
 
 
         //asset tokens_out = asset(quant.amount, CORE_SYMBOL);
@@ -86,6 +90,8 @@ namespace eosiosystem
     void system_contract::gocnewprop(const account_name owner, asset fee, const std::string &pname, const std::string &pcontent, const std::string &url, uint16_t start_type)
     {
         require_auth(owner);
+        auto time_now = now();
+
 
         eosio_assert(pname.size() < 512, "name too long");
         eosio_assert(pcontent.size() < 1024, "content too long");
@@ -99,26 +105,26 @@ namespace eosiosystem
         {owner, N(eosio.gpfee), fee, std::string("create proposal")});
 
         uint64_t new_id = _gocproposals.available_primary_key();
-
         //create proposal
-        _gocproposals.emplace(owner, [&](goc_proposal_info &info) {
+        _gocproposals.emplace(owner, [&](auto& info) {
             info.id = new_id;
             info.owner = owner;
             info.fee = fee;
             info.proposal_name = pname;
             info.proposal_content = pcontent;
             info.url = url;
-            info.create_time = now();
-            info.vote_starttime = now() + _gstate.goc_vote_start_time;
-            info.bp_vote_starttime = now() + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period;
+            info.create_time = time_now;
+            info.vote_starttime = time_now + _gstate.goc_vote_start_time;
+            info.bp_vote_starttime = time_now + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period;
+            info.bp_vote_endtime = time_now + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period + _gstate.goc_bp_vote_period;
 
             if (start_type == 1)
-                info.vote_starttime = now();
+                info.vote_starttime = time_now;
 
             if (start_type == 2)
             {// TEST ONLY
-                info.vote_starttime = now();
-                info.bp_vote_starttime = now();
+                info.vote_starttime = time_now;
+                info.bp_vote_starttime = time_now;
             }
             info.total_yeas = 0;
             info.total_nays = 0;
@@ -147,7 +153,7 @@ namespace eosiosystem
         (N(eosio.token), {owner, N(active)},
         {owner, N(eosio.gpfee), fee, std::string("update proposal")});
 
-        _gocproposals.modify(proposal_updating, 0, [&](goc_proposal_info &info) {
+        _gocproposals.modify(proposal_updating, 0, [&](auto& info) {
             info.proposal_name = pname;
             info.proposal_content = pcontent;
             info.url = url;
@@ -160,9 +166,12 @@ namespace eosiosystem
 
         const auto &proposal_voting = _gocproposals.get(pid, "proposal not exist");
 
+        auto time_now = now();
+
+
         //User vote time, bp vote as normal user
-        eosio_assert(proposal_voting.vote_starttime < now(), "proposal voting not yet started”");
-        eosio_assert(proposal_voting.bp_vote_starttime > now(), "proposal voting expired");
+        eosio_assert(proposal_voting.vote_starttime < time_now, "proposal voting not yet started”");
+        eosio_assert(proposal_voting.bp_vote_starttime > time_now, "proposal voting expired");
 
         //User need stake for vote
 
@@ -187,12 +196,12 @@ namespace eosiosystem
             {
                 eosio::print("updating old vote of ", name{voter}, " ", pid, " ", yea, "\n");
 
-                votes.modify(vote_info, 0, [&](goc_vote_info &info) {
+                votes.modify(vote_info, 0, [&](auto& info) {
                     info.vote = yea;
-                    info.vote_update_time = now();
+                    info.vote_update_time = time_now;
                 });
 
-                _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                _gocproposals.modify(proposal_voting, 0, [&](auto &info) {
                     if (yea)
                     {
                         info.total_nays -= 1.0;
@@ -214,13 +223,13 @@ namespace eosiosystem
         {
             eosio::print("creating vote for ", name{voter}, " ", pid, " ", yea, "\n");
 
-            votes.emplace(voter, [&](goc_vote_info &info) {
+            votes.emplace(voter, [&](auto& info) {
                 info.owner = voter;
                 info.vote = yea;
-                info.vote_time = now();
-                info.vote_update_time = now();
+                info.vote_time = time_now;
+                info.vote_update_time = time_now;
             });
-            _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+            _gocproposals.modify(proposal_voting, 0, [&](auto& info) {
                 if (yea)
                 {
                     info.total_yeas += 1.0;
@@ -231,7 +240,7 @@ namespace eosiosystem
                 }
             });
             //freeze goc stake to bp vote end
-            userres.modify(res_itr, voter, [&](auto &res) {
+            userres.modify(res_itr, voter, [&](auto& res) {
                 res.goc_stake_freeze = proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period;
             });
         }
@@ -240,6 +249,8 @@ namespace eosiosystem
     void system_contract::gocbpvote(account_name voter, uint64_t pid, bool yea)
     {
         require_auth(voter);
+
+        auto time_now = now();
 
         const auto &proposal_voting = _gocproposals.get(pid, "proposal not exist");
 
@@ -257,8 +268,8 @@ namespace eosiosystem
         eosio_assert(bp_count < 21 , "only bp can vote");
 
         //bp vote time window
-        eosio_assert(proposal_voting.bp_vote_starttime < now(), "proposal bp voting not yet started");
-        eosio_assert(proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period > now(), "proposal bp voting expired");
+        eosio_assert(proposal_voting.bp_vote_starttime < time_now, "proposal bp voting not yet started");
+        eosio_assert(proposal_voting.bp_vote_endtime > time_now, "proposal bp voting expired");
         
 
         //TODO:maybe need fee to run for avoid attacking
@@ -276,12 +287,12 @@ namespace eosiosystem
             {
                 eosio::print("updating old bp vote of ", name{voter}, " ", pid, " ", yea, "\n");
 
-                bpvotes.modify(vote_info, 0, [&](goc_vote_info &info) {
+                bpvotes.modify(vote_info, 0, [&](auto& info) {
                     info.vote = yea;
-                    info.vote_update_time = now();
+                    info.vote_update_time = time_now;
                 });
 
-                _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+                _gocproposals.modify(proposal_voting, 0, [&](auto& info) {
                     if (yea)
                     {
                         info.bp_nays -= 2.0;
@@ -304,10 +315,10 @@ namespace eosiosystem
             bpvotes.emplace(voter, [&](goc_vote_info &info) {
                 info.owner = voter;
                 info.vote = yea;
-                info.vote_time = now();
-                info.vote_update_time = now();
+                info.vote_time = time_now;
+                info.vote_update_time = time_now;
             });
-            _gocproposals.modify(proposal_voting, 0, [&](goc_proposal_info &info) {
+            _gocproposals.modify(proposal_voting, 0, [&](auto& info) {
                 if (yea)
                 {
                     info.bp_nays -= 1.0;

@@ -37,7 +37,7 @@ namespace eosiosystem {
       {
          _gstate.last_pervote_bucket_fill = current_time();
          //GOC use gn_bucket to count last day's gn rewards
-         _gstate.last_gn_bucket_empty = current_time();
+         _gstate.last_gn_bucket_empty = now();
       }    
 
 
@@ -86,6 +86,7 @@ namespace eosiosystem {
                     "cannot claim rewards until the chain is activated (at least 15% of all tokens participate in voting)" );
 
       auto ct = current_time();
+      auto time_now = now();
 
       eosio_assert( ct - prod.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
 
@@ -138,20 +139,64 @@ namespace eosiosystem {
       }
 
       // GOC cal gn rewards on prod's claimreward action, every 24H once 
-      if(ct > _gstate.last_gn_bucket_empty + useconds_per_day) {
+      if(ct >= _gstate.last_gn_bucket_empty + useconds_per_day) {
 
-        auto lastday_proposal_count = 10;
+        auto idx = _gocproposals.get_index<N(byendtime)>();
 
-        _gocproposals;
+        std::vector<uint64_t> end_proposals;
 
-        // Divide rewards for every passed proposal
-        auto per_proposal_reward = _gstate.goc_gn_bucket / lastday_proposal_count;
+        for ( auto it = idx.cbegin(); it != idx.cend() && _gstate.last_gn_bucket_empty <= it->bp_vote_endtime; ++it ) {
+            end_proposals.push_back( it->id );
+            
+            _gocproposals.modify(it, 0, [&](auto &info){
+                info.settle_time = time_now;
+            });       
+        }
 
-        // proposal fee and rewards is divided for every gn voters
+        auto proposal_count = end_proposals.size();
 
+        // have end proposals
+        if (proposal_count > 0)
+        {
+            // Divide rewards for every passed proposal
+            auto per_proposal_reward = _gstate.goc_gn_bucket / proposal_count;
 
-        //reset gn bucket empty time
-        _gstate.last_gn_bucket_empty = ct;
+            // every single proposal have max reward limit
+            if (per_proposal_reward > _gstate.goc_max_proposal_reward)
+                per_proposal_reward = _gstate.goc_max_proposal_reward;
+
+            // proposal fee and rewards is divided for every gn voters
+            for(uint64_t pid : end_proposals) {
+
+                
+                goc_votes_table votes(_self, pid);
+
+                // check all vote in votes info table
+                for(auto& vote : votes)
+                {
+                    //add reward to users pending reward table to avoid heavy load, they can use refund command to get them
+                    goc_rewards_table rewards(_self, vote.owner);
+
+                    rewards.emplace(_self, [&](auto &info){
+                        info.owner = vote.owner;
+                        info.reward_time = time_now;
+                        info.proposal_id = pid;
+                        info.rewards = asset(per_proposal_reward);
+                    });
+
+                    
+
+                    votes.modify(vote, 0, [&](auto &vote_info){
+                        vote_info.settle_time = time_now;
+                    });
+                }
+            }
+
+            //empty the gn bucket every time, left token saved in gocgns account
+            _gstate.goc_gn_bucket =0;
+            //reset gn bucket empty time
+            _gstate.last_gn_bucket_empty = time_now;
+        }
       }
 
 
