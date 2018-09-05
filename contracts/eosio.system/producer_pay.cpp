@@ -16,6 +16,13 @@ namespace eosiosystem {
    const uint64_t useconds_per_day      = 24 * 3600 * uint64_t(1000000);
    const uint64_t useconds_per_year     = seconds_per_year*1000000ll;
 
+   //GOC settings, not used in code, percentage of new token. 
+   const double   goc_bp_rate           = 0.2;              // 1% for BP 
+   const double   goc_vote_rate         = 0.1;              // 0.5% for BP votes
+   const double   goc_gn_rate           = 0.15;             // 0.75% for GN
+   const double   goc_wps_rate          = 0.55;             // 2.75% for WPS
+
+
 
    void system_contract::onblock( block_timestamp timestamp, account_name producer ) {
       using namespace eosio;
@@ -27,7 +34,11 @@ namespace eosiosystem {
          return;
 
       if( _gstate.last_pervote_bucket_fill == 0 )  /// start the presses
+      {
          _gstate.last_pervote_bucket_fill = current_time();
+         //GOC use gn_bucket to count last day's gn rewards
+         _gstate.last_gn_bucket_empty = current_time();
+      }    
 
 
       /**
@@ -83,15 +94,30 @@ namespace eosiosystem {
 
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>( (continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year) );
-
+         //GOC rules
+         //GOC give 0.1%(20% of new tokens) for voting
          auto to_producers       = new_tokens / 5;
-         auto to_savings         = new_tokens - to_producers;
+         //GOC give 0.5% for voting
+         auto to_voters          = new_tokens / 10;
+         //GOC give 0.75% for gn
+         auto to_gns             = new_tokens * 3 / 20;
+         //GOC save 2.75% for worker plan system 
+         auto to_savings         = new_tokens - to_producers - to_voters - to_gns;
+
+         //remain the same as EOS
          auto to_per_block_pay   = to_producers / 4;
          auto to_per_vote_pay    = to_producers - to_per_block_pay;
 
          INLINE_ACTION_SENDER(eosio::token, issue)( N(eosio.token), {{N(eosio),N(active)}},
                                                     {N(eosio), asset(new_tokens), std::string("issue tokens for producer pay and savings")} );
 
+         //GOC add
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
+                                                       { N(eosio), N(eosio.gocvs), asset(to_voters), "fund voter bucket" } );
+         //GOC add
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
+                                                       { N(eosio), N(eosio.gocgns), asset(to_gns), "fund gn bucket" } );                                              
+         
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
                                                        { N(eosio), N(eosio.saving), asset(to_savings), "unallocated inflation" } );
 
@@ -104,13 +130,37 @@ namespace eosiosystem {
          _gstate.pervote_bucket  += to_per_vote_pay;
          _gstate.perblock_bucket += to_per_block_pay;
 
+         //as EOS, use these buckets for tokens counting
+         _gstate.goc_gn_bucket    += to_gns;
+         _gstate.goc_voter_bucket += to_voters;
+
          _gstate.last_pervote_bucket_fill = ct;
       }
 
+      // GOC cal gn rewards on prod's claimreward action, every 24H once 
+      if(ct > _gstate.last_gn_bucket_empty + useconds_per_day) {
+
+        auto lastday_proposal_count = 10;
+
+        _gocproposals;
+
+        // Divide rewards for every passed proposal
+        auto per_proposal_reward = _gstate.goc_gn_bucket / lastday_proposal_count;
+
+        // proposal fee and rewards is divided for every gn voters
+
+
+        //reset gn bucket empty time
+        _gstate.last_gn_bucket_empty = ct;
+      }
+
+
+      // here EOS count the producer's unpaid block who claimrewards
       int64_t producer_per_block_pay = 0;
       if( _gstate.total_unpaid_blocks > 0 ) {
          producer_per_block_pay = (_gstate.perblock_bucket * prod.unpaid_blocks) / _gstate.total_unpaid_blocks;
       }
+      // here EOS count the producer's votes who claimrewards
       int64_t producer_per_vote_pay = 0;
       if( _gstate.total_producer_vote_weight > 0 ) {
          producer_per_vote_pay  = int64_t((_gstate.pervote_bucket * prod.total_votes ) / _gstate.total_producer_vote_weight);

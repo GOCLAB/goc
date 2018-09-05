@@ -60,6 +60,11 @@ namespace eosiosystem {
       uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_vote_start_time = 24 * 3600;  // vote start after 24 Hour
+      
+      int64_t              goc_voter_bucket = 0;
+      int64_t              goc_gn_bucket = 0;
+      uint64_t             last_gn_bucket_empty = 0;
+
 
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
