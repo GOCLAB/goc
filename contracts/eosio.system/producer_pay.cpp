@@ -148,7 +148,7 @@ namespace eosiosystem {
         for ( auto it = idx.cbegin(); it != idx.cend() && _gstate.last_gn_bucket_empty <= it->bp_vote_endtime; ++it ) {
             end_proposals.push_back( it->id );
             
-            _gocproposals.modify(_gocproposals.get(it->id), 0, [&](auto& info){
+            idx.modify(it, 0, [&](auto& info){
                 info.settle_time = time_now;
             });       
         }
