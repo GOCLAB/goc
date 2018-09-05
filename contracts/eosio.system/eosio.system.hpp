@@ -123,31 +123,29 @@ namespace eosiosystem {
    };
 
    struct goc_proposal_info {
-      uint64_t          id;
+      uint64_t              id;
       account_name          owner;
       asset                 fee;
       std::string           proposal_name;
       std::string           proposal_content;
       std::string           url;
 
-      eosio::time_point_sec        create_time;
-      eosio::time_point_sec        vote_starttime;
-      eosio::time_point_sec        bp_vote_starttime;
+      time                  create_time;
+      time                  vote_starttime;
+      time                  bp_vote_starttime;
+      time                  settle_time = 0;
 
       double                total_yeas;
       double                total_nays;
       double                bp_nays;
 
       uint64_t  primary_key()const     { return id; }
-      uint32_t  by_starttime()const    { return vote_starttime.utc_seconds;  }
-      double    by_yea_votes()const    { return total_yeas;  }
-      double    by_nay_votes()const    { return total_nays;  }
       bool      vote_pass()const       { return total_yeas > total_nays;  }
       //need change to bp count
-      bool      bp_pass()const         { return bp_nays < 7.0;  }
+      bool      bp_pass()const         { return bp_nays < -7.0;  }
 
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
-                            (create_time)(vote_starttime)(bp_vote_starttime)
+                            (create_time)(vote_starttime)(bp_vote_starttime)(settle_time)
                             (total_yeas)(total_nays)
                             (bp_nays)
                             )
@@ -156,8 +154,8 @@ namespace eosiosystem {
    struct goc_vote_info {
      account_name           owner;
      bool                   vote;
-     eosio::time_point_sec  vote_time;
-     eosio::time_point_sec  vote_update_time;
+     time                   vote_time;
+     time                   vote_update_time;
 
      uint64_t primary_key()const { return owner; }
 

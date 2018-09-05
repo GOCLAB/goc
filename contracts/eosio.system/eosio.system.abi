@@ -250,7 +250,8 @@
          {"name":"net_weight", "type":"asset"},
          {"name":"cpu_weight", "type":"asset"},
          {"name":"ram_bytes", "type":"uint64"},
-         {"name":"governance_stake", "type":"asset"}
+         {"name":"governance_stake", "type":"asset"},
+         {"name":"goc_stake_freeze", "type":"time_point_sec"}
       ]
     },{
       "name": "total_resources",
@@ -391,6 +392,7 @@
         {"name":"create_time",          "type":"time_point_sec"},
         {"name":"vote_starttime",       "type":"time_point_sec"},
         {"name":"bp_vote_starttime",    "type":"time_point_sec"},
+        {"name":"settle_time",          "type":"time_point_sec"}
         {"name":"total_yeas",           "type":"float64"},
         {"name":"total_nays",           "type":"float64"},
         {"name":"bp_nays",              "type":"float64"}

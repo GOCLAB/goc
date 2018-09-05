@@ -37,11 +37,12 @@ namespace eosiosystem {
       asset         cpu_weight;
       int64_t       ram_bytes = 0;
       asset         governance_stake;
+      time          goc_stake_freeze = 0;
 
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake) )
+      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake)(goc_stake_freeze) )
    };
 
 
