@@ -99,10 +99,10 @@ namespace eosiosystem
         eosio_assert(fee.symbol == asset().symbol, "fee must be system token");
         eosio_assert(fee.amount > _gstate.goc_proposal_fee_limit, "insufficient fee");
 
-        //charge proposal fee
+        //charge proposal fee to goc gn saving account
         INLINE_ACTION_SENDER(eosio::token, transfer)
         (N(eosio.token), {owner, N(active)},
-        {owner, N(eosio.gpfee), fee, std::string("create proposal")});
+        {owner, N(eosio.gocgns), fee, std::string("create proposal")});
 
         uint64_t new_id = _gocproposals.available_primary_key();
         //create proposal
@@ -151,7 +151,7 @@ namespace eosiosystem
         asset fee = asset(_gstate.goc_action_fee, CORE_SYMBOL);
         INLINE_ACTION_SENDER(eosio::token, transfer)
         (N(eosio.token), {owner, N(active)},
-        {owner, N(eosio.gpfee), fee, std::string("update proposal")});
+        {owner, N(eosio.gocgns), fee, std::string("update proposal")});
 
         _gocproposals.modify(proposal_updating, 0, [&](auto& info) {
             info.proposal_name = pname;
