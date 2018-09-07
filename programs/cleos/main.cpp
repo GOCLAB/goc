@@ -1173,17 +1173,15 @@ struct get_transaction_id_subcommand {
 
 struct stake_governance_subcommand {
    string from_str;
-   string stake_amount;
 
     stake_governance_subcommand(CLI::App* actionRoot) {
         auto governance_stake = actionRoot->add_subcommand("gocstake", localized("Stake for Governance"));
         governance_stake->add_option("payer", from_str, localized("The account staking for Governance"))->required();
-        governance_stake->add_option("amount", stake_amount, localized("The amount of GOC to stake for Governance"))->required();
+        //governance_stake->add_option("amount", stake_amount, localized("The amount of GOC to stake for Governance"))->required();
         add_standard_transaction_options(governance_stake);
         governance_stake->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
-            ("payer", from_str)
-            ("quant", to_asset(stake_amount));
+            ("payer", from_str);
             send_actions({create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(gocstake), act_payload)});            
         });
 
@@ -1192,17 +1190,16 @@ struct stake_governance_subcommand {
 
 struct unstake_governance_subcommand {
    string receiver_str;
-   string amount;
+   //string amount;
 
    unstake_governance_subcommand(CLI::App* actionRoot) {
       auto governance_unstake = actionRoot->add_subcommand("gocunstake", localized("Unstake for Governance"));
       governance_unstake->add_option("receiver", receiver_str, localized("The account to receive GOC for unstake governance"))->required();
-      governance_unstake->add_option("amount", amount, localized("The amount of GOC to unstake"))->required();
+      //governance_unstake->add_option("amount", amount, localized("The amount of GOC to unstake"))->required();
       add_standard_transaction_options(governance_unstake);
       governance_unstake->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
-               ("receiver", receiver_str)
-               ("quant", to_asset(amount));
+               ("receiver", receiver_str);
             send_actions({create_action({permission_level{receiver_str,config::active_name}}, config::system_account_name, N(gocunstake), act_payload)});
          });
    }

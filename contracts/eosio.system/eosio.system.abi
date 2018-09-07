@@ -161,15 +161,13 @@
       "name": "gocstake",
       "base": "",
       "fields": [
-         {"name":"payer", "type":"account_name"},
-         {"name":"quant", "type":"asset"}
+         {"name":"payer", "type":"account_name"}
       ]
     },{
       "name": "gocunstake",
       "base": "",
       "fields": [
-         {"name":"receiver", "type":"account_name"},
-         {"name":"quant", "type":"asset"}
+         {"name":"receiver", "type":"account_name"}
       ]
     },{
       "name": "gocnewprop",

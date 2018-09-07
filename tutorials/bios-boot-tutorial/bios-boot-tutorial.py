@@ -192,7 +192,7 @@ def createGocStakedAccounts(b, e):
     for i in range(b, e):
         a = accounts[i]
         run(args.cleos + 'transfer eosio %s "2000.0000 SYS"' % (a['name']))
-        run(args.cleos + 'system gocstake %s "1000.0 SYS" ' % (a['name']))
+        run(args.cleos + 'system gocstake %s ' % (a['name']))
 
 def createGocProposals(b, e):
     for i in range(b, e):

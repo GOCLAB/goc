@@ -54,13 +54,13 @@ namespace eosiosystem {
       block_timestamp      last_name_close;
 
       //GOC parameters
-      int64_t              goc_proposal_fee_limit=  1000000;
-      int64_t              goc_stake_limit = 1000000;
-      int64_t              goc_action_fee = 10;
+      int64_t              goc_proposal_fee_limit=  10000000;
+      int64_t              goc_stake_limit = 1000000000;
+      int64_t              goc_action_fee = 10000;
       int64_t              goc_max_proposal_reward = 1000000;
       uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
-      uint32_t             goc_vote_start_time = 24 * 3600;  // vote start after 24 Hour
+      uint32_t             goc_vote_start_time = 24 * 3600 * 3;  // vote start after 3 Days
       
       int64_t              goc_voter_bucket = 0;
       int64_t              goc_gn_bucket = 0;
@@ -273,8 +273,8 @@ namespace eosiosystem {
          void sellram( account_name receiver, int64_t bytes );
 
 
-         void gocstake( account_name payer, asset tokens );
-         void gocunstake( account_name receiver, asset tokens );
+         void gocstake( account_name payer);
+         void gocunstake( account_name receiver);
         // start_type: 0:normal, 1:skip waiting, 2:skip user vote, only for debug
          void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, uint16_t start_type);
          void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url );
