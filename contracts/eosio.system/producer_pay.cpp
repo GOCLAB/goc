@@ -159,7 +159,7 @@ namespace eosiosystem {
         if (proposal_count > 0)
         {
             // Divide rewards for every passed proposal
-            auto per_proposal_reward = _gstate.goc_gn_bucket / proposal_count;
+            int64_t per_proposal_reward = static_cast<int64_t>(_gstate.goc_gn_bucket / proposal_count);
 
             // every single proposal have max reward limit
             if (per_proposal_reward > _gstate.goc_max_proposal_reward)
@@ -171,6 +171,18 @@ namespace eosiosystem {
                 
                 goc_votes_table votes(_self, pid);
 
+                const auto &proposal_updating = _gocproposals.get(pid, "proposal not exist");
+
+                uint64_t vote_count = proposal_updating.total_voter;
+
+                //record settle time & reward
+                _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                    info.settle_time = time_now;
+                    info.reward = asset (per_proposal_reward);
+                });
+
+                int64_t vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
+
                 // check all vote in votes info table
                 for(auto& vote : votes)
                 {
@@ -181,7 +193,8 @@ namespace eosiosystem {
                         info.owner = vote.owner;
                         info.reward_time = time_now;
                         info.proposal_id = pid;
-                        info.rewards = asset(per_proposal_reward);
+                        //every one share proposal reward
+                        info.rewards = asset(vote_reward_token);
                     });
 
                     
