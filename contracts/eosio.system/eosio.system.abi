@@ -317,8 +317,8 @@
          {"name":"goc_governance_vote_period",    "type":"uint32"},
          {"name":"goc_bp_vote_period",            "type":"uint32"},
          {"name":"goc_vote_start_time",           "type":"uint32"},
-         {"name":"goc_voter_bucket",              "type":"int64"},
-         {"name":"goc_gn_bucket",                 "type":"int64"},
+         {"name":"goc_voter_bucket",              "type":"uint64"},
+         {"name":"goc_gn_bucket",                 "type":"uint64"},
          {"name":"last_gn_bucket_empty",           "type":"uint32"}
       ]
     },{
@@ -397,9 +397,12 @@
         {"name":"bp_vote_starttime",    "type":"time_point_sec"},
         {"name":"bp_vote_endtime",      "type":"time_point_sec"},
         {"name":"settle_time",          "type":"time_point_sec"},
+        {"name":"reward",               "type":"asset"},
         {"name":"total_yeas",           "type":"float64"},
         {"name":"total_nays",           "type":"float64"},
-        {"name":"bp_nays",              "type":"float64"}
+        {"name":"total_voter",          "type":"uint64"},
+        {"name":"bp_nays",              "type":"float64"},
+        {"name":"total_bp",             "type":"uint16"}
       ]
     },{
       "name": "goc_vote_info",

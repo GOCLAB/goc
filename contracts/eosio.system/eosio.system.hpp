@@ -143,11 +143,15 @@ namespace eosiosystem {
       time                  vote_starttime;
       time                  bp_vote_starttime;
       time                  bp_vote_endtime;
+
       time                  settle_time = 0;
+      asset                 reward;
 
       double                total_yeas;
       double                total_nays;
+      uint64_t              total_voter = 0;
       double                bp_nays;
+      uint16_t              total_bp = 0;
 
       uint64_t  primary_key()const     { return id; }
       uint64_t  by_endtime()const      { return bp_vote_endtime; }

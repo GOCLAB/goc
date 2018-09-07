@@ -237,6 +237,9 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
             {
                 info.total_nays += 1.0;
             }
+            // count voters
+            info.total_voter += 1;
+
         });
         //freeze goc stake to bp vote end
         userres.modify(res_itr, voter, [&](auto &res) {
@@ -294,11 +297,11 @@ void system_contract::gocbpvote(account_name voter, uint64_t pid, bool yea)
             _gocproposals.modify(proposal_voting, 0, [&](auto &info) {
                 if (yea)
                 {
-                    info.bp_nays -= 1.0;
+                    info.bp_nays -= 2.0;
                 }
                 else
                 {
-                    info.bp_nays += 1.0;
+                    info.bp_nays += 2.0;
                 }
             });
         }
@@ -326,6 +329,9 @@ void system_contract::gocbpvote(account_name voter, uint64_t pid, bool yea)
             {
                 info.bp_nays += 1.0;
             }
+            //count bp votes
+            info.total_bp += 1;
+
         });
     }
 }
