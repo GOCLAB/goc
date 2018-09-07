@@ -150,6 +150,7 @@ namespace eosiosystem {
       double                total_yeas;
       double                total_nays;
       uint64_t              total_voter = 0;
+      
       double                bp_nays;
       uint16_t              total_bp = 0;
 
@@ -160,9 +161,10 @@ namespace eosiosystem {
       bool      bp_pass()const         { return bp_nays < -7.0;  }
 
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
-                            (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)(settle_time)
-                            (total_yeas)(total_nays)
-                            (bp_nays)
+                            (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)
+                            (settle_time)(reward)
+                            (total_yeas)(total_nays)(total_voter)
+                            (bp_nays)(total_bp)
                             )
    };
 
@@ -175,7 +177,7 @@ namespace eosiosystem {
 
      uint64_t primary_key()const { return owner; }
 
-     EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time))     
+     EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time)(settle_time))     
    };
 
    struct goc_reward_info {
@@ -186,7 +188,7 @@ namespace eosiosystem {
 
       uint64_t  primary_key()const { return owner; }
 
-      EOSLIB_SERIALIZE( goc_reward_info, (owner)(reward_time)(rewards) )
+      EOSLIB_SERIALIZE( goc_reward_info, (owner)(reward_time)(proposal_id)(rewards) )
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
