@@ -97,7 +97,7 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     eosio_assert(pcontent.size() < 1024, "content too long");
     eosio_assert(url.size() < 512, "url too long");
     eosio_assert(fee.symbol == asset().symbol, "fee must be system token");
-    eosio_assert(fee.amount > _gstate.goc_proposal_fee_limit, "insufficient fee");
+    eosio_assert(fee.amount >= _gstate.goc_proposal_fee_limit, "insufficient fee");
 
     //charge proposal fee to goc gn saving account
     INLINE_ACTION_SENDER(eosio::token, transfer)

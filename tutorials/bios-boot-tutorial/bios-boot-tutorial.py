@@ -188,10 +188,10 @@ def createStakedAccounts(b, e):
             retry(args.cleos + 'transfer eosio %s "%s"' % (a['name'], intToCurrency(unstaked)))
 
 def createGocStakedAccounts(b, e):
-    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % "200000.0000 SYS")
+    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % "2000000.0000 SYS")
     for i in range(b, e):
         a = accounts[i]
-        run(args.cleos + 'transfer eosio %s "2000.0000 SYS"' % (a['name']))
+        run(args.cleos + 'transfer eosio %s "200000.0000 SYS"' % (a['name']))
         run(args.cleos + 'system gocstake %s ' % (a['name']))
 
 def createGocProposals(b, e):
