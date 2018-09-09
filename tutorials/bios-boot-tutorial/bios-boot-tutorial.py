@@ -14,6 +14,7 @@ args = None
 logFile = None
 
 unlockTimeout = 999999999
+walletPassword = "PW5KkvdvuE5YU1P9B4c5qVziV9k4tnx7QANvgDiE2qDxUa2su9Yth"
 fastUnstakeSystem = './fast.refund/eosio.system/eosio.system.wasm'
 
 systemAccounts = [
@@ -78,13 +79,24 @@ def sleep(t):
     time.sleep(t)
     print('resume')
 
-def startWallet():
+def startNewWallet():
+    run('killall keosd || true')
+    sleep(1.5)
     run('rm -rf ' + os.path.abspath(args.wallet_dir))
     run('mkdir -p ' + os.path.abspath(args.wallet_dir))
     background(args.keosd + ' --unlock-timeout %d --http-server-address 127.0.0.1:6666 --wallet-dir %s' % (unlockTimeout, os.path.abspath(args.wallet_dir)))
+    run(args.cleos + 'wallet create --file password.default.wallet')
     sleep(.4)
-    run(args.cleos + 'wallet create --to-console')
 
+def startWallet():
+    run('killall keosd || true')
+    f = open('password.default.wallet','r')        
+    walletPassword = f.readline()
+    background(args.keosd + ' --unlock-timeout %d --http-server-address 127.0.0.1:6666 --wallet-dir %s' % (unlockTimeout, os.path.abspath(args.wallet_dir)))
+    run(args.cleos + 'wallet open')
+    run(args.cleos + 'wallet unlock --password %s' % walletPassword)
+    sleep(.4)
+    
 def importKeys():
     run(args.cleos + 'wallet import --private-key ' + args.private_key)
     keys = {}
@@ -305,9 +317,11 @@ def produceNewAccounts():
 def stepKillAll():
     run('killall keosd nodeos || true')
     sleep(1.5)
-def stepStartWallet():
-    startWallet()
+def stepStartNewWallet():
+    startNewWallet()
     importKeys()
+def stepStartWallet():
+    startWallet() 
 def stepStartBoot():
     startNode(0, {'name': 'eosio', 'pvt': args.private_key, 'pub': args.public_key})
     sleep(1.5)
@@ -360,6 +374,7 @@ parser = argparse.ArgumentParser()
 commands = [
     ('k', 'kill',           stepKillAll,                True,    "Kill all nodeos and keosd processes"),
     ('w', 'wallet',         stepStartWallet,            True,    "Start keosd, create wallet, fill with keys"),
+    ('W', 'new-wallet',     stepStartNewWallet,         False,   "Empty Data, Start keosd, create wallet, fill with keys"),
     ('b', 'boot',           stepStartBoot,              True,    "Start boot node"),
     ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (eosio.*)"),
     ('c', 'contracts',      stepInstallSystemContracts, True,    "Install system contracts (token, msig)"),
@@ -389,15 +404,15 @@ parser.add_argument('--genesis', metavar='', help="Path to genesis.json", defaul
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
 parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
-parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=100)
-parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=10)
+parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=50)
+parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=50)
 parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.2)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=1000)
-parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=3)
+parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=9)
 parser.add_argument('--min-producer-funds', metavar='', help="Minimum producer funds", type=float, default=1000.0000)
 parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=4)
-parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=20)
+parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=50)
 parser.add_argument('--num-senders', metavar='', help="Number of users to transfer funds randomly", type=int, default=10)
 parser.add_argument('--producer-sync-delay', metavar='', help="Time (s) to sleep to allow producers to sync", type=int, default=80)
 parser.add_argument('-a', '--all', action='store_true', help="Do everything marked with (*)")

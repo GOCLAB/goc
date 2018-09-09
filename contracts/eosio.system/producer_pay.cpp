@@ -180,10 +180,13 @@ namespace eosiosystem {
                     info.settle_time = time_now;
                     info.reward = asset (per_proposal_reward);
                 });
-
-                if (vote_count > 0){
-
-                    int64_t vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
+                
+                int64_t vote_reward_token = 0;
+                
+                // only deal with voted proposal
+                if(vote_count > 0.0)
+                {
+                    vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
 
                     // check all vote in votes info table
                     for(auto& vote : votes)
