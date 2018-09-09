@@ -139,7 +139,7 @@ namespace eosiosystem {
       }
 
       // GOC cal gn rewards on prod's claimreward action, every 24H once 
-      if(ct >= _gstate.last_gn_bucket_empty + useconds_per_day) {
+      if(time_now >= _gstate.last_gn_bucket_empty + seconds_per_day) {
 
         auto idx = _gocproposals.get_index<N(byendtime)>();
 
