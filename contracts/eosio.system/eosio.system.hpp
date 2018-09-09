@@ -181,12 +181,15 @@ namespace eosiosystem {
    };
 
    struct goc_reward_info {
+      uint64_t      pkey;
       account_name  owner;
       time          reward_time;
       uint64_t      proposal_id;
       eosio::asset  rewards = asset(0);
 
       uint64_t  primary_key()const { return owner; }
+      uint64_t  get_proposal_id() const { return proposal_id; }
+      account_name  get_owner() const { return owner; }
 
       EOSLIB_SERIALIZE( goc_reward_info, (owner)(reward_time)(proposal_id)(rewards) )
    };
@@ -207,7 +210,10 @@ namespace eosiosystem {
 
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
-   typedef eosio::multi_index< N(gocreward), goc_reward_info>      goc_rewards_table;
+  //  typedef eosio::multi_index< N(gocreward), goc_reward_info>      goc_rewards_table;
+   typedef eosio::multi_index< N(gocreward), goc_reward_info, 
+                                indexed_by<N(byowner), const_mem_fun<goc_reward_info, account_name, &goc_reward_info::get_owner>  >
+                              >      goc_rewards_table;
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
