@@ -180,28 +180,34 @@ namespace eosiosystem {
                     info.settle_time = time_now;
                     info.reward = asset (per_proposal_reward);
                 });
-
-                int64_t vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
-
-                // check all vote in votes info table
-                for(auto& vote : votes)
+                
+                int64_t vote_reward_token = 0;
+                
+                // only deal with voted proposal
+                if(vote_count > 0.0)
                 {
-                    //add reward to users pending reward table to avoid heavy load, they can use refund command to get them
-                    goc_rewards_table rewards(_self, vote.owner);
+                    vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
 
-                    rewards.emplace(_self, [&](auto &info){
-                        info.owner = vote.owner;
-                        info.reward_time = time_now;
-                        info.proposal_id = pid;
-                        //every one share proposal reward
-                        info.rewards = asset(vote_reward_token);
-                    });
+                    // check all vote in votes info table
+                    for(auto& vote : votes)
+                    {
+                        //add reward to users pending reward table to avoid heavy load, they can use refund command to get them
+                        goc_rewards_table rewards(_self, vote.owner);
 
-                    
+                        rewards.emplace(_self, [&](auto &info){
+                            info.owner = vote.owner;
+                            info.reward_time = time_now;
+                            info.proposal_id = pid;
+                            //every one share proposal reward
+                            info.rewards = asset(vote_reward_token);
+                        });
 
-                    votes.modify(vote, 0, [&](auto &vote_info){
-                        vote_info.settle_time = time_now;
-                    });
+                        
+
+                        votes.modify(vote, 0, [&](auto &vote_info){
+                            vote_info.settle_time = time_now;
+                        });
+                    }
                 }
             }
 
