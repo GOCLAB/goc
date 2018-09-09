@@ -195,7 +195,6 @@ namespace eosiosystem {
                         goc_rewards_table rewards(_self, vote.owner);
 
                         rewards.emplace(_self, [&](auto &info){
-                            info.owner = vote.owner;
                             info.reward_time = time_now;
                             info.proposal_id = pid;
                             //every one share proposal reward

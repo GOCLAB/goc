@@ -181,14 +181,13 @@ namespace eosiosystem {
    };
 
    struct goc_reward_info {
-      account_name  owner;
       time          reward_time;
       uint64_t      proposal_id;
       eosio::asset  rewards = asset(0);
 
-      uint64_t  primary_key()const { return owner; }
+      uint64_t  primary_key()const { return proposal_id; }
 
-      EOSLIB_SERIALIZE( goc_reward_info, (owner)(reward_time)(proposal_id)(rewards) )
+      EOSLIB_SERIALIZE( goc_reward_info, (reward_time)(proposal_id)(rewards) )
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
