@@ -145,7 +145,8 @@ namespace eosiosystem {
 
         std::vector<uint64_t> end_proposals;
 
-        for ( auto it = idx.cbegin(); it != idx.cend() && _gstate.last_gn_bucket_empty <= it->bp_vote_endtime; ++it ) {
+        //add all ended and not settled proposal to container
+        for ( auto it = idx.cbegin(); it != idx.cend() && _gstate.last_gn_bucket_empty >= it->bp_vote_endtime && it->settle_time == 0; ++it ) {
             end_proposals.push_back( it->id );
             
             idx.modify(it, 0, [&](auto& info){
