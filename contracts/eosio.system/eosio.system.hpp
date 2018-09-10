@@ -206,7 +206,7 @@ namespace eosiosystem {
 
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
-   typedef eosio::multi_index< N(gocreward), goc_reward_info>      goc_rewards_table;
+   typedef eosio::multi_index< N(gocrewards), goc_reward_info>      goc_rewards_table;
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
@@ -283,6 +283,7 @@ namespace eosiosystem {
         // start_type: 0:normal, 1:skip waiting, 2:skip user vote, only for debug
          void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, uint16_t start_type);
          void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url );
+         void gocsetpstage(const account_name owner, uint64_t id, uint16_t stage, time start_time);
 
          void gocvote( account_name voter, uint64_t id, bool yea );
          void gocbpvote( account_name bp, uint64_t id, bool yea );

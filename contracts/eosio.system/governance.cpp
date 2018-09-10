@@ -147,17 +147,83 @@ void system_contract::gocupprop(const account_name owner, uint64_t id, const std
     eosio_assert(proposal_updating.vote_starttime > now(), "proposal is not available for modify");
     eosio_assert(proposal_updating.owner == owner, "only owner can update proposal");
 
-    //charge little for avoid attacking
-    asset fee = asset(_gstate.goc_action_fee, CORE_SYMBOL);
-    INLINE_ACTION_SENDER(eosio::token, transfer)
-    (N(eosio.token), {owner, N(active)},
-     {owner, N(eosio.gocgns), fee, std::string("update proposal")});
-
     _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
         info.proposal_name = pname;
         info.proposal_content = pcontent;
         info.url = url;
     });
+}
+
+void system_contract::gocsetpstage(const account_name owner, uint64_t id, uint16_t stage, time start_time)
+{
+    require_auth(owner);
+
+    eosio_assert(stage < 5, "available value for stage is (0-4), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled");
+
+    const auto &proposal_updating = _gocproposals.get(id, "proposal not exist");
+
+    eosio_assert(proposal_updating.owner == owner, "only owner can update proposal");
+    eosio_assert(proposal_updating.settle_time == 0, "Avoid reward bug, settled proposal not allowed");
+
+    if(start_time == 0)
+        start_time = now();
+
+    time one_hour = 3600;
+    
+    switch( stage ) {
+        case 0 : {
+            _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                info.create_time = start_time;
+                info.vote_starttime = start_time + _gstate.goc_vote_start_time;
+                info.bp_vote_starttime = start_time + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period;
+                info.bp_vote_endtime = start_time + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period + _gstate.goc_bp_vote_period;
+            });
+        } 
+        break;
+        case 1 : {
+            _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                info.create_time = start_time - one_hour;
+                info.vote_starttime = start_time ;
+                info.bp_vote_starttime = start_time + _gstate.goc_governance_vote_period;
+                info.bp_vote_endtime = start_time + _gstate.goc_governance_vote_period + _gstate.goc_bp_vote_period;
+            });
+        } 
+        break;
+        case 2 : {
+            _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                info.create_time = start_time - one_hour * 2;
+                info.vote_starttime = start_time - one_hour;
+                info.bp_vote_starttime = start_time ;
+                info.bp_vote_endtime = start_time + _gstate.goc_bp_vote_period;
+            });
+        } 
+        break;
+        case 3 : {
+            _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                info.create_time = start_time - one_hour * 3;
+                info.vote_starttime = start_time - one_hour * 2;
+                info.bp_vote_starttime = start_time - one_hour;
+                info.bp_vote_endtime = start_time;
+            });
+        } 
+        break;
+        case 4 : {
+            _gocproposals.modify(proposal_updating, 0, [&](auto &info) {
+                info.create_time = start_time - one_hour * 4;
+                info.vote_starttime = start_time - one_hour * 3;
+                info.bp_vote_starttime = start_time - one_hour * 2;
+                info.bp_vote_endtime = start_time - one_hour;
+                info.settle_time = start_time;
+            });
+        } 
+        break;
+        default :
+            eosio::print("Stage error\n");//Stage not match, do nothing
+            return;
+        break;
+    }
+
+
 }
 
 void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)

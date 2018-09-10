@@ -1255,7 +1255,7 @@ struct update_governance_proposal_subcommand {
         update_proposal->add_option("name", name, localized("The name of updating proposal"))->required();
         update_proposal->add_option("content", content, localized("The content of updating proposal"))->required();
         update_proposal->add_option("url", url, localized("The url of updating proposal"))->required();
-        add_standard_transaction_options(update_proposal);
+        //add_standard_transaction_options(update_proposal);
         update_proposal->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
                ("owner", owner_str)
@@ -1268,6 +1268,30 @@ struct update_governance_proposal_subcommand {
 
     }
 
+};
+
+struct set_governance_proposal_stage_subcommand {
+    string owner_str;
+    string id;
+    string stage;
+    string start_time;
+
+    set_governance_proposal_stage_subcommand(CLI::App* actionRoot) {
+        auto set_stage = actionRoot->add_subcommand("setpstage", localized("Set governance proposal stage"));
+        set_stage->add_option("owner", owner_str, localized("The owner of updating proposal"))->required();
+        set_stage->add_option("id", id, localized("The id of updating proposal"))->required();
+        set_stage->add_option("stage", stage, localized("To which stage (0-4), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled"))->required();
+        set_stage->add_option("starttime", start_time, localized("Stage start time, Only for testnet"));
+
+        set_stage->set_callback([this] {
+            fc::variant act_payload = fc::mutable_variant_object()
+               ("owner", owner_str)
+               ("id", id)
+               ("stage", stage)
+               ("start_time", start_time);;
+            send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocsetpstage), act_payload)});
+         });
+    }
 };
 
 struct vote_governance_proposal_subcommand {
@@ -3162,8 +3186,9 @@ int main( int argc, char** argv ) {
    auto gocStake = stake_governance_subcommand(system);
    auto gocUnstake = unstake_governance_subcommand(system);
 
-   auto gocnp = create_governance_proposal_subcommand(system);
-   auto gocup = update_governance_proposal_subcommand(system);
+   auto gocNewProposal = create_governance_proposal_subcommand(system);
+   auto gocUpdateProposal = update_governance_proposal_subcommand(system);
+   auto gocSetProposalStage = set_governance_proposal_stage_subcommand(system);
 
    auto gocvote = vote_governance_proposal_subcommand(system);
    

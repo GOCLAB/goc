@@ -198,6 +198,6 @@ EOSIO_ABI( eosiosystem::system_contract,
      // producer_pay.cpp
      (onblock)(claimrewards)
      // governance.cpp
-     (gocstake)(gocunstake)(gocnewprop)(gocupprop)(gocvote)(gocbpvote)
+     (gocstake)(gocunstake)(gocnewprop)(gocupprop)(gocsetpstage)(gocvote)(gocbpvote)
      //(voteproposal)
 )
