@@ -21,7 +21,7 @@
     * nodeos: GOC的核心后台进程，nodeos可配置各种插件以作为恰当的节点运行。
     * cleos: GOC的命令行工具，采用REST API的形式与nodeos进行交互,是开发人员常用的命令接口。
     * keosd: GOC的轻量级钱包，用于管理钱包密钥和对交易签名。
-    * 三者关系图：[avatar](./avatar/component_relationship.png)
+    * 三者关系图：![avatar](./avatar/component_relationship.png)
 * Eosiocpp工具
     * eosiocpp是将C++转化为wasm和abi的编译器。（wasm：WebAssembly的缩写，wasm的说明可以自行查阅搜索引擎，在GOC中可认为是智能合约对应的可执行文件，abi：Application Binary Interface,程序二进制文件,在EOS中是为了便于合约的接口描述和接口调用）。eosiocpp也即是合约代码的编译器。    
 
@@ -39,8 +39,8 @@
     * ./bios-boot-tutorial.py -sctST，做一串工作，分别是生成必要的系统账户，部署系统合约，发SYS币，部署system合约（就是我们主要修改的地方），生成一系列用户账户
     * ./bios-boot-tutorial.py -g是我增加的goc部分数据
     * ./bios-boot-tutorial.py -pPv是生成bp账户，启动bp节点，投票
-
-* GOC创建账号动作分解
+    
+* GOC创建账号动作分解
     * ./bios-boot-tutorial.py -W 启动钱包时，详见stepStartNewWallet()函数
         * 通过keosd命令（--http-server-address设定钱包服务地址，--wallet-dir设定钱包密钥存放位置）启动钱包
         * cleos wallet create --file xxxx（xxxx文件内容是钱包密码，注意密码与公私钥不是一回事）
@@ -49,7 +49,7 @@
 
 * GOC中的表，及CUDR
 
-* GOC中内存、带宽、CPU
+* GOC中内存、带宽、CPU
 
 * GOC中的抵押、赎回
 
@@ -61,10 +61,10 @@
 
 * GOC源码的plugin机制（待进一步解读）
     * 参考：https://www.cnblogs.com/hbright/p/9234998.html
-    * 相互调用与依赖的关系：[avatar](./avatar/plugins.png)
+    * 相互调用与依赖的关系：![avatar](./avatar/plugins.png)
 * GOC源码架构（待进一步解读）
-    * 视图1：[avatar](./avatar/architecture.png)
-    * 视图2：[avatar](./avatar/overview.png)
+    * 视图1：![avatar](./avatar/architecture.png)
+    * 视图2：![avatar](./avatar/overview.png)
 * systemAccounts有哪些，怎么用？
 
 * 系统合约及作用
