@@ -1,7 +1,7 @@
 * faq是什么意思？
     * faq是frequent asked question的缩写
 * 为什么要建立faq.md文档？
-    * 由于EOS源码更新较快，其文档更新不及时，且存在纷繁复杂（如docker）的运行方式，经常出现一些卡壳的问题导致跟进者难以继续，因此有必要整理一些实用的工具使用说明、源码解读说明和踩过的坑的说明，以帮助新来者降低学习成本。
+    * 由于EOS源码更新较快，其文档更新不及时，且存在纷繁复杂（如docker）的运行方式，经常出现一些卡壳的问题导致跟进者难以继续，因此有必要整理一些实用的工具使用说明、源码解读说明和踩过的坑的说明，以帮助新来者降低学习成本。
 * GOC是什么意思？
     * GOC是governance of consensus的缩写，GOC是一条强调治理的公链，GOC的源码是从EOS分支得到，并且会根据需要将EOS最新的改动merge至GOC
 * 开发环境
@@ -11,11 +11,14 @@
 * 代码管理工具
     * GOC的代码在GitHub私有库上，由于项目结构复杂，开发人员众多，建议统一采用sourceTree(下载地址：https://www.sourcetreeapp.com/ 仅支持windows和mac版)进行管理，以便查看其他协作人员（包括EOS人员）提交的代码和注释。
 * 下载源码
-    * 在新建的GOC的工作目录（以下简写成$GOC）下执行git clone git://github.com/schacon/grit.git
+    * 在新建的GOC的工作目录（以下简写成$GOC）下执行git clone https://github.com/bxliu/GOCint.git 或直接根据上述git地址在sourceTree中拉取。
 * 编译源码
     * 在$GOC下执行./eosio_build.sh，若出现![avatar](./avatar/build_success.png)表示编译成功
+* 编译脚本eosio_build.sh分析
+
 * 常见编译问题
-    *
+    * 编译中提示未下载依赖的子仓库，解决方法：按照提示抓取即可
+
 * 编译产物cleos/nodeos/keosd作用与关系
     * 参考说明：https://developers.eos.io/eosio-home/docs/programs-and-tools
     * nodeos: GOC的核心后台进程，nodeos可配置各种插件以作为恰当的节点运行。
@@ -30,7 +33,7 @@
 * cleos/nodeos/keosd使用说明
     * 由于各命令的子命令较多，纷繁复杂，因此建议阅读$GOC/tutorials/bios-boot-tutorial/bios-boot-tutorial.py文件，快速掌握GOC节点启动、钱包启动、创建公私钥、合约运行等命令
     * 编译后，可执行文件cleos/nodeos/keosd分别在$GOC/build/programs/cleos/ $GOC/build/programs/nodeos/
-    $GOC/build/programs/keosd/ 目录下，建议将以上三个目录添加至环境变量
+    $GOC/build/programs/keosd/ 目录下，建议将以上三个目录添加至环境变量
 * bios-boot-tutorial.py常用参数
     * ./bios-boot-tutorial.py -k是干掉所有进程
     * ./bios-boot-tutorial.py -w和-W是启动keosd钱
@@ -68,10 +71,10 @@
 * systemAccounts有哪些，怎么用？
 
 * 系统合约及作用
-    * $GOC/eosio.bios
-    * $GOC/eosio.msig
-    * $GOC/eosio.system
-    * $GOC/eosio.token
+    * $GOC/contracts/eosio.bios
+    * $GOC/contracts/eosio.msig
+    * $GOC/contracts/eosio.system
+    * $GOC/contracts/eosio.token
 
 * 测试任务及步骤
     * 任务1
