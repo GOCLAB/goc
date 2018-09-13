@@ -14,13 +14,14 @@
     * 在新建的GOC的工作目录（以下简写成$GOC）下执行git clone https://github.com/bxliu/GOCint.git 或直接根据上述git地址在sourceTree中拉取。
 * 编译源码
     * 在$GOC下执行./eosio_build.sh，若出现![avatar](./avatar/build_success.png)表示编译成功
+    
 * 编译脚本eosio_build.sh分析
-
+    
 * 常见编译问题
-    * 编译中提示未下载依赖的子仓库，解决方法：按照提示抓取即可
+    * 编译中提示未下载依赖的子仓库，解决方法：按照提示抓取即可
 
 * 编译产物cleos/nodeos/keosd作用与关系
-    * 参考说明：https://developers.eos.io/eosio-home/docs/programs-and-tools
+    * 参考说明：https://developers.eos.io/eosio-home/docs/programs-and-tools    
     * nodeos: GOC的核心后台进程，nodeos可配置各种插件以作为恰当的节点运行。
     * cleos: GOC的命令行工具，采用REST API的形式与nodeos进行交互,是开发人员常用的命令接口。
     * keosd: GOC的轻量级钱包，用于管理钱包密钥和对交易签名。
@@ -31,13 +32,13 @@
 * 智能合约
     * 
 * cleos/nodeos/keosd使用说明
-    * 由于各命令的子命令较多，纷繁复杂，因此建议阅读$GOC/tutorials/bios-boot-tutorial/bios-boot-tutorial.py文件，快速掌握GOC节点启动、钱包启动、创建公私钥、合约运行等命令
+    * 由于各命令的子命令较多，纷繁复杂，因此建议直接使用$GOC/tutorials/bios-boot-tutorial/bios-boot-tutorial.py文件，该文件包含了对cleos/nodeos/keosd命令的调用，通过学习和使用bios-boot-tutorial.py达到快速掌握GOC节点启动、钱包启动、创建公私钥、合约运行等命令
     * 编译后，可执行文件cleos/nodeos/keosd分别在$GOC/build/programs/cleos/ $GOC/build/programs/nodeos/
-    $GOC/build/programs/keosd/ 目录下，建议将以上三个目录添加至环境变量
+    $GOC/build/programs/keosd/ 目录下，建议将以上三个目录添加至环境变量，对应的源代码入口分别是$GOC/programs/cleos/main.cpp $GOC/programs/nodeos/main.cpp $GOC/programs/keosd/main.cpp 
 * bios-boot-tutorial.py常用参数
+    * 注：每执行下面一句话，请参考$GOC/tutorials/bios-boot-tutorial/output.log文件查看调用的命令。output.log部分内容如下： ![avatar](./avatar/outputlog.png)
     * ./bios-boot-tutorial.py -k是干掉所有进程
-    * ./bios-boot-tutorial.py -w和-W是启动keosd钱
-    包
+    * ./bios-boot-tutorial.py -w和-W是启动keosd钱包
     * ./bios-boot-tutorial.py -b是启动nodeos
     * ./bios-boot-tutorial.py -sctST，做一串工作，分别是生成必要的系统账户，部署系统合约，发SYS币，部署system合约（就是我们主要修改的地方），生成一系列用户账户
     * ./bios-boot-tutorial.py -g是我增加的goc部分数据
@@ -45,11 +46,11 @@
     
 * GOC创建账号动作分解
     * ./bios-boot-tutorial.py -W 启动钱包时，详见stepStartNewWallet()函数
-        * 通过keosd命令（--http-server-address设定钱包服务地址，--wallet-dir设定钱包密钥存放位置）启动钱包
+        * keosd（--http-server-address设定钱包服务地址，--wallet-dir设定钱包密钥存放位置）启动钱包
         * cleos wallet create --file xxxx（xxxx文件内容是钱包密码，注意密码与公私钥不是一回事）
         * cleos wallet import --private-key PRIVATEKEY导入公私钥
     * 注：关于cleos/nodeos/keosd的详细子命令可在命令行中查看，常用命令参考./bios-boot-tutorial.py中的用法
-
+    
 * GOC中的表，及CUDR
 
 * GOC中内存、带宽、CPU
@@ -77,5 +78,20 @@
     * $GOC/contracts/eosio.token
 
 * 测试任务及步骤
-    * 任务1
-        * 步骤。。。
+    * 参考：https://shimo.im/docs/iuugYv6Wfrk5sZhe/
+    * 一：GOC测试网组网程序
+        * 1.GOC测试网启动程序
+            * 步骤1：单节点初始化配置
+            * 步骤2：系统合约部署
+            * 步骤3：系统token生成及分发
+            * 步骤4：单节点系统合约测试
+            * 步骤5：系统权限下放
+            * 步骤6：测试节点接入
+            * 步骤7：网络联调
+            * 步骤8：启动完毕         
+        * 2. 步骤1：单节点初始化配置工作         
+    * 二：GOC测试网测试程序     
+        * 1.性能测试
+        * 2.功能测试
+     
+    * 三：测试网组网及测试工具
