@@ -15,7 +15,7 @@
     * 哈希：指将任意原数据处理成一个只有数百字节以内的哈希值的算法。比如SHA256、SM3等
     * 公钥密码学：又称非对称密码学，是使用一对公钥和私钥的密码学，与对称密码学（只有一个密钥）相对应，私钥有自己存储，公钥对外公布。公钥密码学包括公钥加密算法和数字签名算法。
         * 大数分解、离散对数、椭圆曲线等数学工具常用来实现非对称密码，对于工程开发来说，无须关心数学原理，直接调用密码库的相关函数。常用的公钥密码体制有基于大数分解的RSA，和基于椭圆曲线的secp256k1.
-        * 公钥密码体制常用来做加解密和签名验签功能。其中加解密发送者用公钥加密，接收者私钥解密；签名验签过程中常用私钥加密，公钥解密，具体来说是指：私钥持有者对消息m进行哈希得到h(m)，并用私钥对h(m)加密生成签名s，将消息m和签名s发送给其他人，其他人用公钥对签名s解密，得到h'(m),对消息m做哈希h(m)，然后通过对比h'(m)与h(m)一致判断验签是否成功。
+        * 公钥密码体制常用来做加解密和签名验签功能。其中加解密发送者用公钥加密，接收者私钥解密；签名验签过程中常用私钥加密，公钥解密，具体来说是指：私钥持有者对消息m进行哈希得到h(m)，并用私钥对h(m)加密生成签名s，将消息m和签名s发送给其他人，其他人用公钥对签名s解密，得到h'(m),对消息m做哈希h(m)，然后通过对比h'(m)与h(m)一致判断验签是否成功。可参考：https://blog.csdn.net/xiangwanpeng/article/details/70834060
         * 目前区块链（包括比特币、以太坊、EOS）基本上只用到了签名验签，并且不可缺少的依赖签名验签功能。
 
 
@@ -55,9 +55,9 @@
 * 上述动作使用到的cleos命令（查看output.log）
     * cleos create account
         * Usage: cleos create account [OPTIONS] creator name OwnerKey [ActiveKey]
+        * owner public key和active public key?
     * cleos push action
-        * Usage: cleos push action [OPTIONS] account action data
-        * owner public key和active public key
+        * Usage: cleos push action [OPTIONS] account action data        
     * cleos set contract
         * Usage: cleos set contract [OPTIONS] account contract-dir [wasm-file] [abi-file]
     * cleos get 
