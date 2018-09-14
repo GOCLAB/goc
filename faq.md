@@ -47,7 +47,7 @@
 * bios-boot-tutorial.py常用参数
     * 注：每执行下面一句话，请参考$GOC/tutorials/bios-boot-tutorial/output.log文件查看调用的命令。output.log部分内容如下： ![avatar](./avatar/outputlog.png)
     * ./bios-boot-tutorial.py -k是干掉所有进程
-    * ./bios-boot-tutorial.py -w和-W是启动keosd钱包
+    * ./bios-boot-tutorial.py -W用于清理目录，初始化钱包，导入私钥，-w快速启动keosd钱包，需要事先执行过-W动作
     * ./bios-boot-tutorial.py -b是启动nodeos
     * ./bios-boot-tutorial.py -sctST，做一串工作，分别是生成必要的系统账户，部署系统合约，发SYS币，部署system合约（就是我们主要修改的地方），生成一系列用户账户
     * ./bios-boot-tutorial.py -g是我增加的goc部分数据
@@ -90,6 +90,18 @@
     * 视图2：
         ![avatar](./avatar/overview.png)
 * systemAccounts有哪些，怎么用？
+    'eosio.bpay',: EOS原生，per-block bucket
+    'eosio.msig',: EOS原生
+    'eosio.names',: EOS原生，Auction name
+    'eosio.ram',: EOS原生，购买内存
+    'eosio.ramfee',: EOS原生，购买内存手续费
+    'eosio.saving',: EOS原生，增发的TOKEN，未划分部分
+    'eosio.stake',: EOS原生，保存和归还CPU带宽抵押
+    'eosio.token',: EOS原生，系统发币
+    'eosio.vpay',: EOS原生，per-vote bucket
+    'eosio.gocgns': GOC新增，用于保存GN奖励增发部分
+    'eosio.gstake',: GOC新增，用于保存投票权限抵押部分，用户赎回时，从此账户取出费用
+    'eosio.gocvs',: GOC新增，用于保存投票奖励增发部分，待实现
 
 * 系统合约及作用
     * $GOC/contracts/eosio.bios
