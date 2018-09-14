@@ -10,6 +10,15 @@
 
 * 代码管理工具
     * GOC的代码在GitHub私有库上，由于项目结构复杂，开发人员众多，建议统一采用sourceTree(下载地址：https://www.sourcetreeapp.com/ 仅支持windows和mac版)进行管理，以便查看其他协作人员（包括EOS人员）提交的代码和注释。
+* 密码学知识与背景
+    * 注：密码学博大精深，GOC工程目前不做密码研究和密码技术攻关，旨在使用和分析现有的密码算法。
+    * 哈希：指将任意原数据处理成一个只有数百字节以内的哈希值的算法。比如SHA256、SM3等
+    * 公钥密码学：又称非对称密码学，是使用一对公钥和私钥的密码学，与对称密码学（只有一个密钥）相对应，私钥有自己存储，公钥对外公布。公钥密码学包括公钥加密算法和数字签名算法。
+        * 大数分解、离散对数、椭圆曲线等数学工具常用来实现非对称密码，对于工程开发来说，无须关心数学原理，直接调用密码库的相关函数。
+        * 公钥密码体制常用来做加解密和签名验签功能。其中加解密发送者用公钥加密，接收者私钥解密；签名验签过程中常用私钥加密，公钥解密，具体来说是指：私钥持有者对消息m进行哈希得到h(m)，并用私钥对h(m)加密生成签名s，将消息m和签名s发送给其他人，其他人用公钥对签名s解密，得到h'(m),对消息m做哈希h(m)，然后通过对比h‘(m)与h(m)一致判断验签是否成功。
+        * 目前区块链（包括比特币、以太坊、EOS）基本上只用到了签名验签，并且严格依赖签名验签功能。
+        
+
 * 下载源码
     * 在新建的GOC的工作目录（以下简写成$GOC）下执行git clone https://github.com/bxliu/GOCint.git 或直接根据上述git地址在sourceTree中拉取。
 * 编译源码
@@ -43,7 +52,16 @@
     * ./bios-boot-tutorial.py -sctST，做一串工作，分别是生成必要的系统账户，部署系统合约，发SYS币，部署system合约（就是我们主要修改的地方），生成一系列用户账户
     * ./bios-boot-tutorial.py -g是我增加的goc部分数据
     * ./bios-boot-tutorial.py -pPv是生成bp账户，启动bp节点，投票
-    
+* 上述动作使用到的cleos命令（查看output.log）
+    * cleos create account
+        * Usage: cleos create account [OPTIONS] creator name OwnerKey [ActiveKey]
+    * cleos push action
+        * Usage: cleos push action [OPTIONS] account action data
+        * owner public key和active public key
+    * cleos set contract
+        * Usage: cleos set contract [OPTIONS] account contract-dir [wasm-file] [abi-file]
+    * cleos get 
+        * Usage: cleos get SUBCOMMAND
 * GOC创建账号动作分解
     * ./bios-boot-tutorial.py -W 启动钱包时，详见stepStartNewWallet()函数
         * keosd（--http-server-address设定钱包服务地址，--wallet-dir设定钱包密钥存放位置）启动钱包
@@ -67,8 +85,10 @@
     * 参考：https://www.cnblogs.com/hbright/p/9234998.html
     * 相互调用与依赖的关系：![avatar](./avatar/plugins.png)
 * GOC源码架构（待进一步解读）
-    * 视图1：![avatar](./avatar/architecture.png)
-    * 视图2：![avatar](./avatar/overview.png)
+    * 视图1：
+        ![avatar](./avatar/architecture.png)
+    * 视图2：
+        ![avatar](./avatar/overview.png)
 * systemAccounts有哪些，怎么用？
 
 * 系统合约及作用
