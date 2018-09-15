@@ -97,6 +97,12 @@
     * $GOC/contracts/eosio.system
     * $GOC/contracts/eosio.token
 
+* 生成plugin时候请注意，MacOS环境需对生成脚本做一定修改
+```ini
+-find $pluginName -type f -exec sed -i "s/template_plugin/$pluginName/g" {} \;
++find $pluginName -type f -exec sed -i "" "s/template_plugin/$pluginName/g" {} \;
+```
+
 * 测试任务及步骤
     * 参考：https://shimo.im/docs/iuugYv6Wfrk5sZhe/
     * 一：GOC测试网组网程序
