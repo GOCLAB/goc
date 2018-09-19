@@ -149,3 +149,13 @@
 - 运行 `eosio_build.sh` 提示内存不足
 
   eosio编译脚本限制了内存至少为7000MB, 找到 `./scripts/eosio_build_ubuntu.sh` (其他系统改为对应系统代号), 搜索`7000`, 替换为`1000`或者小于电脑内存的数值即可.
+
+- 运行 `eosio_build.sh` 提示 `git describe failed`
+
+  某些依赖库的git tag没有搞定, 暂时解决方案: `libraries/appbase/version.cmake.in` 中找到
+
+    COMMAND @GIT_EXECUTABLE@ describe --tags
+
+  替换为
+  
+    COMMAND @GIT_EXECUTABLE@ describe --tags --dirty
