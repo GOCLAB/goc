@@ -49,7 +49,7 @@
 * 由于各命令的子命令较多，纷繁复杂，因此建议直接使用$GOC/tutorials/bios-boot-tutorial/bios-boot-tutorial.py文件，该文件包含了对cleos/nodeos/keosd命令的调用，通过学习和使用bios-boot-tutorial.py达到快速掌握GOC节点启动、钱包启动、创建公私钥、合约运行等命令
   * 编译后，可执行文件cleos/nodeos/keosd分别在$GOC/build/programs/cleos/ $GOC/build/programs/nodeos/
     $GOC/build/programs/keosd/ 目录下，建议将以上三个目录添加至环境变量，对应的源代码入口分别是$GOC/programs/cleos/main.cpp $GOC/programs/nodeos/main.cpp $GOC/programs/keosd/main.cpp  
-* bios-boot-tutorial.py常用参数
+* bios-boot-tutorial.py常用参数 [详情](./bios-boot-tutorial.md)
   * 注：每执行下面一句话，请参考$GOC/tutorials/bios-boot-tutorial/output.log文件查看调用的命令。output.log部分内容如下： ![avatar](./avatar/outputlog.png)
   * ./bios-boot-tutorial.py -k是干掉所有进程
   * ./bios-boot-tutorial.py -w和-W是启动keosd钱包
@@ -143,3 +143,9 @@
   * 1.性能测试
   * 2.功能测试
 * 三：测试网组网及测试工具
+
+## 一些小技巧
+
+- 运行 `eosio_build.sh` 提示内存不足
+
+  eosio编译脚本限制了内存至少为7000MB, 找到 `./scripts/eosio_build_ubuntu.sh` (其他系统改为对应系统代号), 搜索`7000`, 替换为`1000`或者小于电脑内存的数值即可.
