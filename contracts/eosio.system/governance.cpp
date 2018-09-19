@@ -102,7 +102,7 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     //charge proposal fee to goc gn saving account
     INLINE_ACTION_SENDER(eosio::token, transfer)
     (N(eosio.token), {owner, N(active)},
-     {owner, N(eosio.gocgns), fee, std::string("create proposal")});
+     {owner, N(eosio.gns), fee, std::string("create proposal")});
 
     uint64_t new_id = _gocproposals.available_primary_key();
     //create proposal

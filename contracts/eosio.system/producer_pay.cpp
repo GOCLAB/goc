@@ -114,10 +114,10 @@ namespace eosiosystem {
 
          //GOC add
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.gocvs), asset(to_voters), "fund voter bucket" } );
+                                                       { N(eosio), N(eosio.vs), asset(to_voters), "fund voter bucket" } );
          //GOC add
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.gocgns), asset(to_gns), "fund gn bucket" } );                                              
+                                                       { N(eosio), N(eosio.gns), asset(to_gns), "fund gn bucket" } );                                              
          
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
                                                        { N(eosio), N(eosio.saving), asset(to_savings), "unallocated inflation" } );
@@ -211,7 +211,7 @@ namespace eosiosystem {
                 }
             }
 
-            //empty the gn bucket every time, left token saved in gocgns account
+            //empty the gn bucket every time, left token saved in gns account
             _gstate.goc_gn_bucket =0;
             //reset gn bucket empty time
             _gstate.last_gn_bucket_empty = time_now;

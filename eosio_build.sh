@@ -45,10 +45,10 @@
       BUILD_DIR="${PWD}"
    fi
    CMAKE_BUILD_TYPE=Release
-   DISK_MIN=20
+   DISK_MIN=10
    DOXYGEN=false
    ENABLE_COVERAGE_TESTING=false
-   CORE_SYMBOL_NAME="SYS"
+   CORE_SYMBOL_NAME="GOC"
    START_MAKE=true
    TEMP_DIR="/tmp"
    TIME_BEGIN=$( date -u +%s )
@@ -287,7 +287,7 @@
    printf "\t/\_____||| (___) || |___/\ ___) (___| (___) |\n"
    printf "\t(_______/(_______)\_______)\_______/(_______)\n${txtrst}"
 
-   printf "\\n\\tEOSIO has been successfully built. %02d:%02d:%02d\\n\\n" $(($TIME_END/3600)) $(($TIME_END%3600/60)) $(($TIME_END%60))
+   printf "\\n\\tGOCIO has been successfully built. %02d:%02d:%02d\\n\\n" $(($TIME_END/3600)) $(($TIME_END%3600/60)) $(($TIME_END%60))
    printf "\\tTo verify your installation run the following commands:\\n"
 
    print_instructions

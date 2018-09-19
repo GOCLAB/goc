@@ -27,9 +27,9 @@ systemAccounts = [
     'eosio.stake',
     'eosio.token',
     'eosio.vpay',
-    'eosio.gocgns',
+    'eosio.gns',
     'eosio.gstake',
-    'eosio.gocvs',
+    'eosio.vs',
 ]
 
 def jsonArg(a):
@@ -131,9 +131,12 @@ def startNode(nodeIndex, account):
         '    --blocks-dir ' + os.path.abspath(dir) + '/blocks'
         '    --config-dir ' + os.path.abspath(dir) +
         '    --data-dir ' + os.path.abspath(dir) +
-        '    --chain-state-db-size-mb 1024'
-        '    --http-server-address 127.0.0.1:' + str(8000 + nodeIndex) +
-        '    --p2p-listen-endpoint 127.0.0.1:' + str(9000 + nodeIndex) +
+        '    --chain-state-db-size-mb 128' 
+        '    --chain-state-db-guard-size-mb 16' 
+        '    --reversible-blocks-db-size-mb 32' 
+        '    --reversible-blocks-db-guard-size-mb 2' 
+        '    --http-server-address 0.0.0.0:' + str(8000 + nodeIndex) +
+        '    --p2p-listen-endpoint 0.0.0.0:' + str(9000 + nodeIndex) +
         '    --max-clients ' + str(maxClients) +
         '    --p2p-max-nodes-per-host ' + str(maxClients) +
         '    --enable-stale-production'
@@ -197,19 +200,19 @@ def createStakedAccounts(b, e):
         retry(args.cleos + 'system newaccount --transfer eosio %s %s --stake-net "%s" --stake-cpu "%s" --buy-ram "%s"   ' % 
             (a['name'], a['pub'], intToCurrency(stakeNet), intToCurrency(stakeCpu), intToCurrency(ramFunds)))
         if unstaked:
-            retry(args.cleos + 'transfer eosio %s "%s"' % (a['name'], intToCurrency(unstaked)))
+            retry(args.cleos + 'transfer eosio "%s" "%s"' % (a['name'], intToCurrency(unstaked)))
 
 def createGocStakedAccounts(b, e):
-    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % "2000000.0000 SYS")
+    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % intToCurrency(20000000000))
     for i in range(b, e):
         a = accounts[i]
-        run(args.cleos + 'transfer eosio %s "200000.0000 SYS"' % (a['name']))
+        run(args.cleos + 'transfer eosio %s "%s"' % (a['name'], intToCurrency(2000000000)))
         run(args.cleos + 'system gocstake %s ' % (a['name']))
 
 def createGocProposals(b, e):
     for i in range(b, e):
         a = accounts[i]
-        run(args.cleos + 'system createproposal %s "1000.0000 SYS" a%s b%s c%s --start-type %s' % (a['name'], i, i, i, i%3))
+        run(args.cleos + 'system createproposal %s "%s" a%s b%s c%s --start-type %s' % (a['name'], intToCurrency(10000000), i, i, i, i%3))
 
 def createGocVotes(b):
     for i in range(0, b):
@@ -403,13 +406,13 @@ parser.add_argument('--nodes-dir', metavar='', help="Path to nodes directory", d
 parser.add_argument('--genesis', metavar='', help="Path to genesis.json", default="./genesis.json")
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
-parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
-parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=50)
-parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=50)
+parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='GOC')
+parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=5000)
+parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=5000)
 parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.2)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=1000)
-parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=9)
+parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=21)
 parser.add_argument('--min-producer-funds', metavar='', help="Minimum producer funds", type=float, default=1000.0000)
 parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=4)
 parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=50)

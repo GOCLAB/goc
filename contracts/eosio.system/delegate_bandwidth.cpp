@@ -430,8 +430,8 @@ namespace eosiosystem {
 
       for(auto& reward : rewards)
       {
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.gocgns),N(active)},
-                                                    { N(eosio.gocgns), owner, reward.rewards, std::string("reward for proposal") } );
+            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.gns),N(active)},
+                                                    { N(eosio.gns), owner, reward.rewards, std::string("reward for proposal") } );
             rewards.erase(reward);
       }
 
