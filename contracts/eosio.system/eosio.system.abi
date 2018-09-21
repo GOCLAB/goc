@@ -696,7 +696,7 @@
       "index_type": "i64",
       "key_names" : ["owner"],
       "key_types" : ["account_name"]
-    }{
+    },{
       "name": "bpvotes",
       "type": "goc_vote_info",
       "index_type": "i64",

@@ -96,13 +96,13 @@ namespace eosiosystem {
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>( (continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year) );
          //GOC rules
-         //GOC give 0.1%(20% of new tokens) for voting
+         //GOC give 1%(20% of new tokens) for voting
          auto to_producers       = new_tokens / 5;
-         //GOC give 0.5% for voting
+         //GOC give 0.5%(10% of new tokens)  for voting
          auto to_voters          = new_tokens / 10;
-         //GOC give 0.75% for gn
+         //GOC give 0.75%(15% of new tokens) for gn
          auto to_gns             = new_tokens * 3 / 20;
-         //GOC save 2.75% for worker plan system 
+         //GOC save 2.75%(55% of new tokens) for worker plan system, means 11/20 saved
          auto to_savings         = new_tokens - to_producers - to_voters - to_gns;
 
          //remain the same as EOS
