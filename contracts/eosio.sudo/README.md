@@ -3,9 +3,9 @@
 ## 1. Actions:
 The naming convention is codeaccount::actionname followed by a list of parameters.
 
-Execute a transaction while bypassing regular authorization checks (requires authorization of eosio.sudo which needs to be a privileged account).
+Execute a transaction while bypassing regular authorization checks (requires authorization of gocio.sudo which needs to be a privileged account).
 
-### eosio.sudo::exec    executer trx
+### gocio.sudo::exec    executer trx
    - **executer** account executing the transaction
    - **trx** transaction to execute
 
@@ -14,19 +14,19 @@ Execute a transaction while bypassing regular authorization checks (requires aut
 
 ## 2. Installing the eosio.sudo contract
 
-The eosio.sudo contract needs to be installed on a privileged account to function. It is recommended to use the account `eosio.sudo`.
+The eosio.sudo contract needs to be installed on a privileged account to function. It is recommended to use the account `gocio.sudo`.
 
-First, the account `eosio.sudo` needs to be created. Since it has the restricted `eosio.` prefix, only a privileged account can create this account. So this guide will use the `eosio` account to create the `eosio.sudo` account. On typical live blockchain configurations, the `eosio` account can only be controlled by a supermajority of the current active block producers. So, this guide will use the `eosio.msig` contract to help coordinate the approvals of the proposed transaction that creates the `eosio.sudo` account.
+First, the account `gocio.sudo` needs to be created. Since it has the restricted `gocio.` prefix, only a privileged account can create this account. So this guide will use the `eosio` account to create the `gocio.sudo` account. On typical live blockchain configurations, the `eosio` account can only be controlled by a supermajority of the current active block producers. So, this guide will use the `gocio.msig` contract to help coordinate the approvals of the proposed transaction that creates the `gocio.sudo` account.
 
-The `eosio.sudo` account also needs to have sufficient RAM to host the contract and sufficient CPU and network bandwidth to deploy the contract. This means that the creator of the account (`eosio`) needs to gift sufficient RAM to the new account and delegate (preferably with transfer) sufficient bandwidth to the new account. To pull this off the `eosio` account needs to have enough of the core system token (the `SYS` token will be used within this guide) in its liquid balance. So prior to continuing with the next steps of this guide, the active block producers of the chain who are coordinating this process need to ensure that a sufficient amount of core system tokens that they are authorized to spend is placed in the liquid balance of the `eosio` account.
+The `gocio.sudo` account also needs to have sufficient RAM to host the contract and sufficient CPU and network bandwidth to deploy the contract. This means that the creator of the account (`eosio`) needs to gift sufficient RAM to the new account and delegate (preferably with transfer) sufficient bandwidth to the new account. To pull this off the `eosio` account needs to have enough of the core system token (the `SYS` token will be used within this guide) in its liquid balance. So prior to continuing with the next steps of this guide, the active block producers of the chain who are coordinating this process need to ensure that a sufficient amount of core system tokens that they are authorized to spend is placed in the liquid balance of the `eosio` account.
 
 This guide will be using cleos to carry out the process.
 
-### 2.1 Create the eosio.sudo account
+### 2.1 Create the gocio.sudo account
 
-#### 2.1.1 Generate the transaction to create the eosio.sudo account
+#### 2.1.1 Generate the transaction to create the gocio.sudo account
 
-The transaction to create the `eosio.sudo` account will need to be proposed to get the necessary approvals from active block producers before executing it. This transaction needs to first be generated and stored as JSON into a file so that it can be used in the cleos command to propose the transaction to the eosio.msig contract.
+The transaction to create the `gocio.sudo` account will need to be proposed to get the necessary approvals from active block producers before executing it. This transaction needs to first be generated and stored as JSON into a file so that it can be used in the cleos command to propose the transaction to the eosio.msig contract.
 
 A simple way to generate a transaction to create a new account is to use the `cleos system newaccount`. However, that sub-command currently only accepts a single public key as the owner and active authority of the new account. However, the owner and active authorities of the new account should only be satisfied by the `active` permission of `eosio`. One option is to create the new account with the some newly generated key, and then later update the authorities of the new account using `cleos set account permission`. This guide will take an alternative approach which atomically creates the new account in its proper configuration.
 
@@ -34,7 +34,7 @@ Three unsigned transactions will be generated using cleos and then the actions w
 
 First, generate a transaction to capture the necessary actions involved in creating a new account:
 ```
-$ cleos system newaccount -s -j -d --transfer --stake-net "1.000 SYS" --stake-cpu "1.000 SYS" --buy-ram-kbytes 50 eosio eosio.sudo EOS8MMUW11TAdTDxqdSwSqJodefSoZbFhcprndomgLi9MeR2o8MT4 > generated_account_creation_trx.json
+$ cleos system newaccount -s -j -d --transfer --stake-net "1.000 SYS" --stake-cpu "1.000 SYS" --buy-ram-kbytes 50 eosio gocio.sudo EOS8MMUW11TAdTDxqdSwSqJodefSoZbFhcprndomgLi9MeR2o8MT4 > generated_account_creation_trx.json
 726964ms thread-0   main.cpp:429                  create_action        ] result: {"binargs":"0000000000ea305500004d1a03ea305500c80000"} arg: {"code":"gocio","action":"buyrambytes","args":{"payer":"gocio","receiver":"gocio.sudo","bytes":51200}}
 726967ms thread-0   main.cpp:429                  create_action        ] result: {"binargs":"0000000000ea305500004d1a03ea3055102700000000000004535953000000001027000000000000045359530000000001"} arg: {"code":"gocio","action":"delegatebw","args":{"from":"gocio","receiver":"gocio.sudo","stake_net_quantity":"1.0000 SYS","stake_cpu_quantity":"1.0000 SYS","transfer":true}}
 $ cat generated_account_creation_trx.json
@@ -139,7 +139,7 @@ $ cat generated_newaccount_trx.json
 }
 ```
 
-Fourth, generate a transaction containing the `eosio::setpriv` action which will make the `eosio.sudo` account privileged:
+Fourth, generate a transaction containing the `eosio::setpriv` action which will make the `gocio.sudo` account privileged:
 ```
 $ cleos push action -s -j -d eosio setpriv '{"account": "gocio.sudo", "is_priv": 1}' -p eosio > generated_setpriv_trx.json
 $ cat generated_setpriv_trx.json
@@ -196,7 +196,7 @@ $ cat create_sudo_account_trx.json
 }
 ```
 
-The `ref_block_num` and `ref_block_prefix` values were set to 0. The proposed transaction does not need to have a valid TaPoS reference block because it will be reset anyway when scheduled as a deferred transaction during the `eosio.msig::exec` action. The `expiration` field, which was the only other field that was changed, will also be reset when the proposed transaction is scheduled as a deferred transaction during `eosio.msig::exec`. However, this field actually does matter during the propose-approve-exec lifecycle of the proposed transaction. If the present time passes the time in the `expiration` field of the proposed transaction, it will not be possible to execute the proposed transaction even if all necessary approvals are gathered. Therefore, it is important to set the expiration time to some point well enough in the future to give all necessary approvers enough time to review and approve the proposed transaction, but it is otherwise arbitrary. Generally, for reviewing/validation purposes it is important that all potential approvers of the transaction (i.e. the block producers) choose the exact same `expiration` time so that there is not any discrepancy in bytes of the serialized transaction if it was to later be included in payload data of some other action.
+The `ref_block_num` and `ref_block_prefix` values were set to 0. The proposed transaction does not need to have a valid TaPoS reference block because it will be reset anyway when scheduled as a deferred transaction during the `gocio.msig::exec` action. The `expiration` field, which was the only other field that was changed, will also be reset when the proposed transaction is scheduled as a deferred transaction during `gocio.msig::exec`. However, this field actually does matter during the propose-approve-exec lifecycle of the proposed transaction. If the present time passes the time in the `expiration` field of the proposed transaction, it will not be possible to execute the proposed transaction even if all necessary approvals are gathered. Therefore, it is important to set the expiration time to some point well enough in the future to give all necessary approvers enough time to review and approve the proposed transaction, but it is otherwise arbitrary. Generally, for reviewing/validation purposes it is important that all potential approvers of the transaction (i.e. the block producers) choose the exact same `expiration` time so that there is not any discrepancy in bytes of the serialized transaction if it was to later be included in payload data of some other action.
 
 Then, all but the first action JSON object of generated_account_creation_trx.json should be appended to the `actions` array of create_sudo_account_trx.json, and then the single action JSON object of generated_setpriv_trx.json should be appended to the `actions` array of create_sudo_account_trx.json. The final result is a create_sudo_account_trx.json file that looks like the following:
 ```
@@ -287,7 +287,7 @@ $ cat producer_permissions.json
 ]
 ```
 
-#### 2.1.2 Propose the transaction to create the eosio.sudo account
+#### 2.1.2 Propose the transaction to create the gocio.sudo account
 
 Only one of the potential approvers will need to propose the transaction that was created in the previous sub-section. All the other approvers should still follow the steps in the previous sub-section to generate the same create_sudo_account_trx.json file as all the other approvers. They will need this to compare to the actual proposed transaction prior to approving.
 
@@ -299,11 +299,11 @@ The lead block producer (`blkproducera`) should propose the transaction stored i
 ```
 $ cleos multisig propose_trx createsudo producer_permissions.json create_sudo_account_trx.json blkproducera
 executed transaction: bf6aaa06b40e2a35491525cb11431efd2b5ac94e4a7a9c693c5bf0cfed942393  744 bytes  772 us
-#    eosio.msig <= eosio.msig::propose          {"proposer":"blkproducera","proposal_name":"createsudo","requested":[{"actor":"blkproducera","permis...
+#    gocio.msig <= gocio.msig::propose          {"proposer":"blkproducera","proposal_name":"createsudo","requested":[{"actor":"blkproducera","permis...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
-#### 2.1.3 Review and approve the transaction to create the eosio.sudo account
+#### 2.1.3 Review and approve the transaction to create the gocio.sudo account
 
 Each of the potential approvers of the proposed transaction (i.e. the active block producers) should first review the proposed transaction to make sure they are not approving anything that they do not agree to.
 
@@ -358,24 +358,24 @@ When an approver (e.g. `blkproducerb`) is satisfied with the proposed transactio
 ```
 $ cleos multisig approve blkproducera createsudo '{"actor": "blkproducerb", "permission": "active"}' -p blkproducerb
 executed transaction: 03a907e2a3192aac0cd040c73db8273c9da7696dc7960de22b1a479ae5ee9f23  128 bytes  472 us
-#    eosio.msig <= eosio.msig::approve          {"proposer":"blkproducera","proposal_name":"createsudo","level":{"actor":"blkproducerb","permission"...
+#    gocio.msig <= gocio.msig::approve          {"proposer":"blkproducera","proposal_name":"createsudo","level":{"actor":"blkproducerb","permission"...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
-#### 2.1.4 Execute the transaction to create the eosio.sudo account
+#### 2.1.4 Execute the transaction to create the gocio.sudo account
 
-When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `eosio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
+When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `gocio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
 
 ```
 $ cleos multisig exec blkproducera createsudo blkproducera
 executed transaction: 7ecc183b99915cc411f96dde7c35c3fe0df6e732507f272af3a039b706482e5a  160 bytes  850 us
-#    eosio.msig <= eosio.msig::exec             {"proposer":"blkproducera","proposal_name":"createsudo","executer":"blkproducera"}
+#    gocio.msig <= gocio.msig::exec             {"proposer":"blkproducera","proposal_name":"createsudo","executer":"blkproducera"}
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
-Anyone can now verify that the `eosio.sudo` was created:
+Anyone can now verify that the `gocio.sudo` was created:
 ```
-$ cleos get account eosio.sudo
+$ cleos get account gocio.sudo
 privileged: true
 permissions:
      owner     1:    1 gocio@active,
@@ -405,11 +405,11 @@ producers:     <not voted>
 
 #### 2.2.1  Generate the transaction to deploy the eosio.sudo contract
 
-The transaction to deploy the contract to the `eosio.sudo` account will need to be proposed to get the necessary approvals from active block producers before executing it. This transaction needs to first be generated and stored as JSON into a file so that it can be used in the cleos command to propose the transaction to the eosio.msig contract.
+The transaction to deploy the contract to the `gocio.sudo` account will need to be proposed to get the necessary approvals from active block producers before executing it. This transaction needs to first be generated and stored as JSON into a file so that it can be used in the cleos command to propose the transaction to the eosio.msig contract.
 
 The easy way to generate this transaction is using cleos:
 ```
-$ cleos set contract -s -j -d eosio.sudo contracts/eosio.sudo/ > deploy_sudo_contract_trx.json
+$ cleos set contract -s -j -d gocio.sudo contracts/eosio.sudo/ > deploy_sudo_contract_trx.json
 Reading WAST/WASM from contracts/eosio.sudo/eosio.sudo.wasm...
 Using already assembled WASM...
 Publishing contract...
@@ -476,7 +476,7 @@ The lead block producer (`blkproducera`) should propose the transaction stored i
 ```
 $ cleos multisig propose_trx deploysudo producer_permissions.json deploy_sudo_contract_trx.json blkproducera
 executed transaction: 9e50dd40eba25583a657ee8114986a921d413b917002c8fb2d02e2d670f720a8  4312 bytes  871 us
-#    eosio.msig <= eosio.msig::propose          {"proposer":"blkproducera","proposal_name":"deploysudo","requested":[{"actor":"blkproducera","permis...
+#    gocio.msig <= gocio.msig::propose          {"proposer":"blkproducera","proposal_name":"deploysudo","requested":[{"actor":"blkproducera","permis...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
@@ -534,7 +534,7 @@ $ cat deploy_sudo_contract_trx_to_review.json
 }
 ```
 
-Each approver should be able to see that the proposed transaction is setting the code and ABI of the `eosio.sudo` contract. But the data is just hex data and therefore not very meaningful to the approver. And considering that `eosio.sudo` at this point should be a privileged contract, it would be very dangerous for block producers to just allow a contract to be deployed to a privileged account without knowing exactly which WebAssembly code they are deploying and also auditing the source code that generated that WebAssembly code to ensure it is safe to deploy.
+Each approver should be able to see that the proposed transaction is setting the code and ABI of the `eosio.sudo` contract. But the data is just hex data and therefore not very meaningful to the approver. And considering that `gocio.sudo` at this point should be a privileged contract, it would be very dangerous for block producers to just allow a contract to be deployed to a privileged account without knowing exactly which WebAssembly code they are deploying and also auditing the source code that generated that WebAssembly code to ensure it is safe to deploy.
 
 This guide assumes that each approver has already audited the source code of the contract to be deployed and has already compiled that code to generate the WebAssembly code that should be byte-for-byte identical to the code that every other approver following the same process should have generated. The guide also assumes that this generated code and its associated ABI were provided in the steps in sub-section 2.2.1 that generated the transaction in the deploy_sudo_contract_trx.json file. It then becomes quite simple to verify that the proposed transaction is identical to the one the potential approver could have proposed with the code and ABI that they already audited:
 ```
@@ -551,24 +551,24 @@ When an approver (e.g. `blkproducerb`) is satisfied with the proposed transactio
 ```
 $ cleos multisig approve blkproducera deploysudo '{"actor": "blkproducerb", "permission": "active"}' -p blkproducerb
 executed transaction: d1e424e05ee4d96eb079fcd5190dd0bf35eca8c27dd7231b59df8e464881abfd  128 bytes  483 us
-#    eosio.msig <= eosio.msig::approve          {"proposer":"blkproducera","proposal_name":"deploysudo","level":{"actor":"blkproducerb","permission"...
+#    gocio.msig <= gocio.msig::approve          {"proposer":"blkproducera","proposal_name":"deploysudo","level":{"actor":"blkproducerb","permission"...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
-#### 2.2.4 Execute the transaction to create the eosio.sudo account
+#### 2.2.4 Execute the transaction to create the gocio.sudo account
 
-When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `eosio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
+When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `gocio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
 
 ```
 $ cleos multisig exec blkproducera deploysudo blkproducera
 executed transaction: e8da14c6f1fdc3255b5413adccfd0d89b18f832a4cc18c4324ea2beec6abd483  160 bytes  1877 us
-#    eosio.msig <= eosio.msig::exec             {"proposer":"blkproducera","proposal_name":"deploysudo","executer":"blkproducera"}
+#    gocio.msig <= gocio.msig::exec             {"proposer":"blkproducera","proposal_name":"deploysudo","executer":"blkproducera"}
 ```
 
 Anyone can now verify that the `eosio.sudo` contract was deployed correctly.
 
 ```
-$ cleos get code -a retrieved-eosio.sudo.abi eosio.sudo
+$ cleos get code -a retrieved-eosio.sudo.abi gocio.sudo
 code hash: 1b3456a5eca28bcaca7a2a3360fbb2a72b9772a416c8e11a303bcb26bfe3263c
 saving abi to retrieved-eosio.sudo.abi
 $ sha256sum contracts/eosio.sudo/eosio.sudo.wasm
@@ -677,7 +677,7 @@ $ cat update_alice_owner_trx.json
 }
 ```
 
-The next step is to generate the transaction containing the `eosio.sudo::exec` action. This action will contain the transaction in update_alice_owner_trx.json as part of its action payload data.
+The next step is to generate the transaction containing the `gocio.sudo::exec` action. This action will contain the transaction in update_alice_owner_trx.json as part of its action payload data.
 
 ```
 $ cleos sudo exec -s -j -d blkproducera update_alice_owner_trx.json > sudo_update_alice_owner_trx.json
@@ -723,9 +723,9 @@ $ cat update_alice_owner_trx_serialized.hex
 0000000000000000000000000000010000000000ea30550040cbdaa86c52d5010000000000855c3400000000a8ed3232310000000000855c340000000080ab26a700000000000000000100000000010000000000ea305500000000a8ed323201000000
 ```
 
-Then generate the template for the transaction containing the `eosio.sudo::exec` action:
+Then generate the template for the transaction containing the `gocio.sudo::exec` action:
 ```
-$ cleos push action -s -j -d eosio.sudo exec '{"executer": "blkproducera", "trx": ""}' > sudo_update_alice_owner_trx.json
+$ cleos push action -s -j -d gocio.sudo exec '{"executer": "blkproducera", "trx": ""}' > sudo_update_alice_owner_trx.json
 $ cat sudo_update_alice_owner_trx.json
 {
   "expiration": "2018-06-29T23:34:01",
@@ -760,7 +760,7 @@ The lead block producer (`blkproducera`) should propose the transaction stored i
 ```
 $ cleos multisig propose_trx updatealice producer_permissions.json sudo_update_alice_owner_trx.json blkproducera
 executed transaction: 10474f52c9e3fc8e729469a577cd2fc9e4330e25b3fd402fc738ddde26605c13  624 bytes  782 us
-#    eosio.msig <= eosio.msig::propose          {"proposer":"blkproducera","proposal_name":"updatealice","requested":[{"actor":"blkproducera","permi...
+#    gocio.msig <= gocio.msig::propose          {"proposer":"blkproducera","proposal_name":"updatealice","requested":[{"actor":"blkproducera","permi...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
@@ -824,9 +824,9 @@ $ cat sudo_update_alice_owner_trx_to_review.json
 }
 ```
 
-The approvers should go through the human-readable transaction output and make sure everything looks fine. However, due to a current limitation of nodeos/cleos, the JSONification of action payload data does not occur recursively. So while both the `hex_data` and the human-readable JSON `data` of the payload of the `eosio.sudo::exec` action is available in the output of the `cleos multisig review` command, only the hex data is available of the payload of the inner `eosio::updateauth` action. So it is not clear what the `updateauth` will actually do.
+The approvers should go through the human-readable transaction output and make sure everything looks fine. However, due to a current limitation of nodeos/cleos, the JSONification of action payload data does not occur recursively. So while both the `hex_data` and the human-readable JSON `data` of the payload of the `gocio.sudo::exec` action is available in the output of the `cleos multisig review` command, only the hex data is available of the payload of the inner `eosio::updateauth` action. So it is not clear what the `updateauth` will actually do.
 
-Furthermore, even if this usability issue was fixed in nodeos/cleos, there will still be cases where there is no sensible human-readable version of an action data payload within a transaction. An example of this is the proposed transaction in sub-section 2.2.3 which used the `eosio::setcode` action to set the contract code of the `eosio.sudo` account. The best thing to do in such situations is for the reviewer to compare the proposed transaction to one generated by them through a process they trust.
+Furthermore, even if this usability issue was fixed in nodeos/cleos, there will still be cases where there is no sensible human-readable version of an action data payload within a transaction. An example of this is the proposed transaction in sub-section 2.2.3 which used the `eosio::setcode` action to set the contract code of the `gocio.sudo` account. The best thing to do in such situations is for the reviewer to compare the proposed transaction to one generated by them through a process they trust.
 
 Since each block producer generated a transaction in sub-section 3.1.1 (stored in the file sudo_update_alice_owner_trx.json) which should be identical to the transaction proposed by the lead block producer, they can each simply check to see if the two transactions are identical:
 ```
@@ -843,18 +843,18 @@ When an approver (e.g. `blkproducerb`) is satisfied with the proposed transactio
 ```
 $ cleos multisig approve blkproducera updatealice '{"actor": "blkproducerb", "permission": "active"}' -p blkproducerb
 executed transaction: 2bddc7747e0660ba26babf95035225895b134bfb2ede32ba0a2bb6091c7dab56  128 bytes  543 us
-#    eosio.msig <= eosio.msig::approve          {"proposer":"blkproducera","proposal_name":"updatealice","level":{"actor":"blkproducerb","permission...
+#    gocio.msig <= gocio.msig::approve          {"proposer":"blkproducera","proposal_name":"updatealice","level":{"actor":"blkproducerb","permission...
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
 #### 3.1.4 Execute the transaction to change the owner permission of an account
 
-When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `eosio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
+When the necessary approvals are collected (in this example, with 21 block producers, at least 15 of their approvals were required), anyone can push the `gocio.msig::exec` action which executes the approved transaction. It makes a lot of sense for the lead block producer who proposed the transaction to also execute it (this will incur another temporary RAM cost for the deferred transaction that is generated by the eosio.msig contract).
 
 ```
 $ cleos multisig exec blkproducera updatealice blkproducera
 executed transaction: 7127a66ae307fbef6415bf60c3e91a88b79bcb46030da983c683deb2a1a8e0d0  160 bytes  820 us
-#    eosio.msig <= eosio.msig::exec             {"proposer":"blkproducera","proposal_name":"updatealice","executer":"blkproducera"}
+#    gocio.msig <= gocio.msig::exec             {"proposer":"blkproducera","proposal_name":"updatealice","executer":"blkproducera"}
 warning: transaction executed locally, but may not be confirmed by the network yet
 ```
 
