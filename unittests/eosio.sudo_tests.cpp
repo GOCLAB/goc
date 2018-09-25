@@ -27,18 +27,18 @@ class eosio_sudo_tester : public tester {
 public:
 
    eosio_sudo_tester() {
-      create_accounts( { N(eosio.msig), N(prod1), N(prod2), N(prod3), N(prod4), N(prod5), N(alice), N(bob), N(carol) } );
+      create_accounts( { N(gocio.msig), N(prod1), N(prod2), N(prod3), N(prod4), N(prod5), N(alice), N(bob), N(carol) } );
       produce_block();
 
 
       base_tester::push_action(config::system_account_name, N(setpriv),
                                  config::system_account_name,  mutable_variant_object()
-                                 ("account", "eosio.msig")
+                                 ("account", "gocio.msig")
                                  ("is_priv", 1)
       );
 
-      set_code( N(eosio.msig), eosio_msig_wast );
-      set_abi( N(eosio.msig), eosio_msig_abi );
+      set_code( N(gocio.msig), eosio_msig_wast );
+      set_abi( N(gocio.msig), eosio_msig_abi );
 
       produce_blocks();
 
@@ -48,7 +48,7 @@ public:
       trx.actions.emplace_back( vector<permission_level>{{config::system_account_name, config::active_name}},
                                 newaccount{
                                    .creator  = config::system_account_name,
-                                   .name     = N(eosio.sudo),
+                                   .name     = N(gocio.sudo),
                                    .owner    = auth,
                                    .active   = auth,
                                 });
@@ -59,13 +59,13 @@ public:
 
       base_tester::push_action(config::system_account_name, N(setpriv),
                                  config::system_account_name,  mutable_variant_object()
-                                 ("account", "eosio.sudo")
+                                 ("account", "gocio.sudo")
                                  ("is_priv", 1)
       );
 
       auto system_private_key = get_private_key( config::system_account_name, "active" );
-      set_code( N(eosio.sudo), eosio_sudo_wast, &system_private_key );
-      set_abi( N(eosio.sudo), eosio_sudo_abi, &system_private_key );
+      set_code( N(gocio.sudo), eosio_sudo_wast, &system_private_key );
+      set_abi( N(gocio.sudo), eosio_sudo_abi, &system_private_key );
 
       produce_blocks();
 
@@ -81,18 +81,18 @@ public:
 
       produce_blocks();
 
-      const auto& accnt = control->db().get<account_object,by_name>( N(eosio.sudo) );
+      const auto& accnt = control->db().get<account_object,by_name>( N(gocio.sudo) );
       abi_def abi;
       BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
       abi_ser.set_abi(abi, abi_serializer_max_time);
 
-      while( control->pending_block_state()->header.producer.to_string() == "eosio" ) {
+      while( control->pending_block_state()->header.producer.to_string() == "gocio" ) {
          produce_block();
       }
    }
 
    void propose( name proposer, name proposal_name, vector<permission_level> requested_permissions, const transaction& trx ) {
-      push_action( N(eosio.msig), N(propose), proposer, mvo()
+      push_action( N(gocio.msig), N(propose), proposer, mvo()
                      ("proposer",      proposer)
                      ("proposal_name", proposal_name)
                      ("requested",     requested_permissions)
@@ -101,7 +101,7 @@ public:
    }
 
    void approve( name proposer, name proposal_name, name approver ) {
-      push_action( N(eosio.msig), N(approve), approver, mvo()
+      push_action( N(gocio.msig), N(approve), approver, mvo()
                      ("proposer",      proposer)
                      ("proposal_name", proposal_name)
                      ("level",         permission_level{approver, config::active_name} )
@@ -109,7 +109,7 @@ public:
    }
 
    void unapprove( name proposer, name proposal_name, name unapprover ) {
-      push_action( N(eosio.msig), N(unapprove), unapprover, mvo()
+      push_action( N(gocio.msig), N(unapprove), unapprover, mvo()
                      ("proposer",      proposer)
                      ("proposal_name", proposal_name)
                      ("level",         permission_level{unapprover, config::active_name})
@@ -130,11 +130,11 @@ transaction eosio_sudo_tester::sudo_exec( account_name executer, const transacti
                   ("permission", name{config::active_name})
               );
   v.push_back( fc::mutable_variant_object()
-                 ("actor", "eosio.sudo")
+                 ("actor", "gocio.sudo")
                  ("permission", name{config::active_name})
              );
    auto act_obj = fc::mutable_variant_object()
-                     ("account", "eosio.sudo")
+                     ("account", "gocio.sudo")
                      ("name", "exec")
                      ("authorization", v)
                      ("data", fc::mutable_variant_object()("executer", executer)("trx", trx) );
@@ -179,8 +179,8 @@ BOOST_FIXTURE_TEST_CASE( sudo_exec_direct, eosio_sudo_tester ) try {
       signed_transaction sudo_trx( sudo_exec( N(alice), trx ), {}, {} );
       /*
       set_transaction_headers( sudo_trx );
-      sudo_trx.actions.emplace_back( get_action( N(eosio.sudo), N(exec),
-                                                 {{N(alice), config::active_name}, {N(eosio.sudo), config::active_name}},
+      sudo_trx.actions.emplace_back( get_action( N(gocio.sudo), N(exec),
+                                                 {{N(alice), config::active_name}, {N(gocio.sudo), config::active_name}},
                                                  mvo()
                                                    ("executer", "alice")
                                                    ("trx", trx)
@@ -197,7 +197,7 @@ BOOST_FIXTURE_TEST_CASE( sudo_exec_direct, eosio_sudo_tester ) try {
 
    BOOST_REQUIRE( bool(trace) );
    BOOST_REQUIRE_EQUAL( 1, trace->action_traces.size() );
-   BOOST_REQUIRE_EQUAL( "eosio", name{trace->action_traces[0].act.account} );
+   BOOST_REQUIRE_EQUAL( "gocio", name{trace->action_traces[0].act.account} );
    BOOST_REQUIRE_EQUAL( "reqauth", name{trace->action_traces[0].act.name} );
    BOOST_REQUIRE_EQUAL( transaction_receipt::executed, trace->receipt->status );
 
@@ -228,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig, eosio_sudo_tester ) try {
    } );
 
    // Now the proposal should be ready to execute
-   push_action( N(eosio.msig), N(exec), N(alice), mvo()
+   push_action( N(gocio.msig), N(exec), N(alice), mvo()
                   ("proposer",      "carol")
                   ("proposal_name", "first")
                   ("executer",      "alice")
@@ -239,12 +239,12 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig, eosio_sudo_tester ) try {
    BOOST_REQUIRE_EQUAL( 2, traces.size() );
 
    BOOST_REQUIRE_EQUAL( 1, traces[0]->action_traces.size() );
-   BOOST_REQUIRE_EQUAL( "eosio.sudo", name{traces[0]->action_traces[0].act.account} );
+   BOOST_REQUIRE_EQUAL( "gocio.sudo", name{traces[0]->action_traces[0].act.account} );
    BOOST_REQUIRE_EQUAL( "exec", name{traces[0]->action_traces[0].act.name} );
    BOOST_REQUIRE_EQUAL( transaction_receipt::executed, traces[0]->receipt->status );
 
    BOOST_REQUIRE_EQUAL( 1, traces[1]->action_traces.size() );
-   BOOST_REQUIRE_EQUAL( "eosio", name{traces[1]->action_traces[0].act.account} );
+   BOOST_REQUIRE_EQUAL( "gocio", name{traces[1]->action_traces[0].act.account} );
    BOOST_REQUIRE_EQUAL( "reqauth", name{traces[1]->action_traces[0].act.name} );
    BOOST_REQUIRE_EQUAL( transaction_receipt::executed, traces[1]->receipt->status );
 
@@ -275,7 +275,7 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig_unapprove, eosio_sudo_tester ) try {
    produce_block();
 
    // The proposal should not have sufficient approvals to pass the authorization checks of eosio.sudo::exec.
-   BOOST_REQUIRE_EXCEPTION( push_action( N(eosio.msig), N(exec), N(alice), mvo()
+   BOOST_REQUIRE_EXCEPTION( push_action( N(gocio.msig), N(exec), N(alice), mvo()
                                           ("proposer",      "carol")
                                           ("proposal_name", "first")
                                           ("executer",      "alice")
@@ -317,7 +317,7 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig_producers_change, eosio_sudo_tester ) tr
    produce_block();
 
    // The proposal has four of the five requested approvals but they are not sufficient to satisfy the authorization checks of eosio.sudo::exec.
-   BOOST_REQUIRE_EXCEPTION( push_action( N(eosio.msig), N(exec), N(alice), mvo()
+   BOOST_REQUIRE_EXCEPTION( push_action( N(gocio.msig), N(exec), N(alice), mvo()
                                           ("proposer",      "carol")
                                           ("proposal_name", "first")
                                           ("executer",      "alice")
@@ -342,7 +342,7 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig_producers_change, eosio_sudo_tester ) tr
    } );
 
    // Now the proposal should be ready to execute
-   push_action( N(eosio.msig), N(exec), N(alice), mvo()
+   push_action( N(gocio.msig), N(exec), N(alice), mvo()
                   ("proposer",      "carol")
                   ("proposal_name", "first")
                   ("executer",      "alice")
@@ -353,12 +353,12 @@ BOOST_FIXTURE_TEST_CASE( sudo_with_msig_producers_change, eosio_sudo_tester ) tr
    BOOST_REQUIRE_EQUAL( 2, traces.size() );
 
    BOOST_REQUIRE_EQUAL( 1, traces[0]->action_traces.size() );
-   BOOST_REQUIRE_EQUAL( "eosio.sudo", name{traces[0]->action_traces[0].act.account} );
+   BOOST_REQUIRE_EQUAL( "gocio.sudo", name{traces[0]->action_traces[0].act.account} );
    BOOST_REQUIRE_EQUAL( "exec", name{traces[0]->action_traces[0].act.name} );
    BOOST_REQUIRE_EQUAL( transaction_receipt::executed, traces[0]->receipt->status );
 
    BOOST_REQUIRE_EQUAL( 1, traces[1]->action_traces.size() );
-   BOOST_REQUIRE_EQUAL( "eosio", name{traces[1]->action_traces[0].act.account} );
+   BOOST_REQUIRE_EQUAL( "gocio", name{traces[1]->action_traces[0].act.account} );
    BOOST_REQUIRE_EQUAL( "reqauth", name{traces[1]->action_traces[0].act.name} );
    BOOST_REQUIRE_EQUAL( transaction_receipt::executed, traces[1]->receipt->status );
 

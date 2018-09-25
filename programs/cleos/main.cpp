@@ -355,7 +355,7 @@ void print_action( const fc::variant& at ) {
    auto console = at["console"].as_string();
 
    /*
-   if( code == "eosio" && func == "setcode" )
+   if( code == "gocio" && func == "setcode" )
       args = args.substr(40)+"...";
    if( name(code) == config::system_account_name && func == "setabi" )
       args = args.substr(40)+"...";
@@ -687,7 +687,7 @@ asset to_asset( account_name code, const string& s ) {
 }
 
 inline asset to_asset( const string& s ) {
-   return to_asset( N(eosio.token), s );
+   return to_asset( N(gocio.token), s );
 }
 
 struct set_account_permission_subcommand {
@@ -1485,7 +1485,7 @@ struct bidname_info_subcommand {
       list_producers->add_option("newname", newname_str, localized("The bidding name"))->required();
       list_producers->set_callback([this] {
          auto rawResult = call(get_table_func, fc::mutable_variant_object("json", true)
-                               ("code", "eosio")("scope", "eosio")("table", "namebids")
+                               ("code", "gocio")("scope", "gocio")("table", "namebids")
                                ("lower_bound", eosio::chain::string_to_name(newname_str.c_str()))("limit", 1));
          if ( print_json ) {
             std::cout << fc::json::to_pretty_string(rawResult) << std::endl;
@@ -2613,7 +2613,7 @@ int main( int argc, char** argv ) {
    auto setActionPermission = set_action_permission_subcommand(setAction);
 
    // Transfer subcommand
-   string con = "eosio.token";
+   string con = "gocio.token";
    string sender;
    string recipient;
    string amount;
@@ -3036,7 +3036,7 @@ int main( int argc, char** argv ) {
          ("requested", requested_perm_var)
          ("trx", trx_var);
 
-      send_actions({chain::action{accountPermissions, "eosio.msig", "propose", variant_to_bin( N(eosio.msig), N(propose), args ) }});
+      send_actions({chain::action{accountPermissions, "gocio.msig", "propose", variant_to_bin( N(gocio.msig), N(propose), args ) }});
    });
 
    //multisige propose transaction
@@ -3076,7 +3076,7 @@ int main( int argc, char** argv ) {
          ("requested", requested_perm_var)
          ("trx", trx_var);
 
-      send_actions({chain::action{accountPermissions, "eosio.msig", "propose", variant_to_bin( N(eosio.msig), N(propose), args ) }});
+      send_actions({chain::action{accountPermissions, "gocio.msig", "propose", variant_to_bin( N(gocio.msig), N(propose), args ) }});
    });
 
 
@@ -3087,7 +3087,7 @@ int main( int argc, char** argv ) {
 
    review->set_callback([&] {
       auto result = call(get_table_func, fc::mutable_variant_object("json", true)
-                         ("code", "eosio.msig")
+                         ("code", "gocio.msig")
                          ("scope", proposer)
                          ("table", "proposal")
                          ("table_key", "")
@@ -3132,7 +3132,7 @@ int main( int argc, char** argv ) {
          ("level", perm_var);
 
       auto accountPermissions = tx_permission.empty() ? vector<chain::permission_level>{{sender,config::active_name}} : get_account_permissions(tx_permission);
-      send_actions({chain::action{accountPermissions, "eosio.msig", action, variant_to_bin( N(eosio.msig), action, args ) }});
+      send_actions({chain::action{accountPermissions, "gocio.msig", action, variant_to_bin( N(gocio.msig), action, args ) }});
    };
 
    // multisig approve
@@ -3175,7 +3175,7 @@ int main( int argc, char** argv ) {
          ("proposal_name", proposal_name)
          ("canceler", canceler);
 
-      send_actions({chain::action{accountPermissions, "eosio.msig", "cancel", variant_to_bin( N(eosio.msig), N(cancel), args ) }});
+      send_actions({chain::action{accountPermissions, "gocio.msig", "cancel", variant_to_bin( N(gocio.msig), N(cancel), args ) }});
       }
    );
 
@@ -3204,7 +3204,7 @@ int main( int argc, char** argv ) {
          ("proposal_name", proposal_name)
          ("executer", executer);
 
-      send_actions({chain::action{accountPermissions, "eosio.msig", "exec", variant_to_bin( N(eosio.msig), N(exec), args ) }});
+      send_actions({chain::action{accountPermissions, "gocio.msig", "exec", variant_to_bin( N(gocio.msig), N(exec), args ) }});
       }
    );
 
@@ -3228,14 +3228,14 @@ int main( int argc, char** argv ) {
 
       auto accountPermissions = get_account_permissions(tx_permission);
       if( accountPermissions.empty() ) {
-         accountPermissions = vector<permission_level>{{executer, config::active_name}, {"eosio.sudo", config::active_name}};
+         accountPermissions = vector<permission_level>{{executer, config::active_name}, {"gocio.sudo", config::active_name}};
       }
 
       auto args = fc::mutable_variant_object()
          ("executer", executer )
          ("trx", trx_var);
 
-      send_actions({chain::action{accountPermissions, "eosio.sudo", "exec", variant_to_bin( N(eosio.sudo), N(exec), args ) }});
+      send_actions({chain::action{accountPermissions, "eosio.sudo", "exec", variant_to_bin( N(gocio.sudo), N(exec), args ) }});
    });
 
    // system subcommand

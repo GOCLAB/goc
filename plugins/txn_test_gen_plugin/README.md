@@ -67,7 +67,7 @@ $ ./cleos set contract eosio ~/eos/build.release/contracts/eosio.bios/
 
 ### Initialize the accounts txn_test_gen_plugin uses
 ```bash
-$ curl --data-binary '["eosio", "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"]' http://localhost:8888/v1/txn_test_gen/create_test_accounts
+$ curl --data-binary '["gocio", "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"]' http://localhost:8888/v1/txn_test_gen/create_test_accounts
 ```
 
 ### Start transaction generation, this will submit 20 transactions evey 20ms (total of 1000TPS)

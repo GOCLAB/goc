@@ -16,7 +16,7 @@ EOS6N7FuKhCoEf2NUfsmZ5Gux4fNn2gMiroMNsR6tfgUT7VxNQEV3
 
 ### 如果eosio没钱需要给它先生钱，不然会报错
 
-../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://47.52.114.54:8000 push action eosio.token issue '["eosio", "1000000000.0003 GOC", "memo"]' -p eosio
+../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://47.52.114.54:8000 push action gocio.token issue '["gocio", "1000000000.0003 GOC", "memo"]' -p eosio
 
 ### 生成新账户，并使用之前的公钥
 
