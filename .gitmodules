@@ -27,3 +27,7 @@
 [submodule "libraries/wabt"]
 	path = libraries/wabt
 	url = http://github.com/EOSIO/wabt
+[submodule "libraries/fc"]
+	path = libraries/fc
+	url = git@github.com:BlockchainLabFudan/fc.git
+	branch = eos
