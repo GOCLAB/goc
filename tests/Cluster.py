@@ -906,12 +906,12 @@ class Cluster(object):
                 return None
 
             initialFunds="1000000.0000 {0}".format(CORE_SYMBOL)
-            Utils.Print("Transfer initial fund %s to individual accounts." % (initialFunds))
+            Utils.Print("Transfer initial fund %s to individual accounts.1" % (initialFunds))
             trans=None
             contract="gocio.token"
             action="transfer"
             for name, keys in producerKeys.items():
-                data="{\"from\":\"eosio\",\"to\":\"%s\",\"quantity\":\"%s\",\"memo\":\"%s\"}" % (name, initialFunds, "init transfer")
+                data="{\"from\":\"gocio\",\"to\":\"%s\",\"quantity\":\"%s\",\"memo\":\"%s\"}" % (name, initialFunds, "init transfer")
                 opts="--permission gocio@active"
                 if name != "gocio":
                     trans=biosNode.pushMessage(contract, action, data, opts)
@@ -1174,7 +1174,7 @@ class Cluster(object):
             Node.validateTransaction(trans)
 
             initialFunds="1000000.0000 {0}".format(CORE_SYMBOL)
-            Utils.Print("Transfer initial fund %s to individual accounts." % (initialFunds))
+            Utils.Print("Transfer initial fund %s to individual accounts.2" % (initialFunds))
             trans=None
             contract=eosioTokenAccount.name
             action="transfer"
