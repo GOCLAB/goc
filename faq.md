@@ -102,10 +102,17 @@
 
 * GOC中的GN
 
-## GOC源码的plugin机制（待进一步解读）
-
-参考：[](https://www.cnblogs.com/hbright/p/9234998.html)
-
+## GOC源码的plugin机制
+* appbase命名空间下，application是cleos/keosd等的运行上下文示例，即插件管理器，plugin继承自abstract_plugin，是所有插件的基类。
+  * 插件的生命周期
+      * 注册(register_plugin)
+      * 配置(set_program_options)
+      * 初始化(plugin_initialize)
+      * 启动(plugin_startup)
+      * 关闭(plugin_shutdown)
+<!-- 参考：[](https://www.cnblogs.com/hbright/p/9234998.html) -->
+  * http_plugin [解读](./tutorials/bios-boot-tutorial/http_plugin.md)
+  * http_plugin [解读](./tutorials/bios-boot-tutorial/http_plugin.md)
 * 生成plugin时候请注意，MacOS环境需对生成脚本做一定修改
 ```ini
 -find $pluginName -type f -exec sed -i "s/template_plugin/$pluginName/g" {} \;
