@@ -368,7 +368,7 @@ def stepTransfer():
     while True:
         randomTransfer(0, args.num_senders)
 def stepLog():
-    run('tail -n 60 ' + args.nodes_dir + '00-eosio/stderr')
+    run('tail -n 60 ' + args.nodes_dir + '00-gocio/stderr')
 
 # Command Line Arguments
 

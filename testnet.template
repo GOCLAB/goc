@@ -93,6 +93,10 @@ ecmd create account gocio gocio.stake $pubsyskey $pubsyskey
 ecmd create account gocio gocio.token $pubsyskey $pubsyskey
 ecmd create account gocio gocio.vpay $pubsyskey $pubsyskey
 ecmd create account gocio gocio.sudo $pubsyskey $pubsyskey
+ecmd create account gocio gocio.gns $pubsyskey $pubsyskey
+ecmd create account gocio gocio.gstake $pubsyskey $pubsyskey
+ecmd create account gocio gocio.vs $pubsyskey $pubsyskey
+
 
 ecmd set contract gocio.token contracts/eosio.token eosio.token.wasm eosio.token.abi
 ecmd set contract gocio.msig contracts/eosio.msig eosio.msig.wasm eosio.msig.abi

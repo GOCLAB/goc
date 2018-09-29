@@ -113,7 +113,8 @@
 
    if [ ! -d "${SOURCE_DIR}/.git" ]; then
       printf "\\n\\tThis build script only works with sources cloned from git\\n"
-      printf "\\tPlease clone a new eos directory with 'git clone https://github.com/EOSIO/eos --recursive'\\n"
+      printf "\\tPlease clone a new eos directory with 'git clone https://github.com/BlockchainLabFudan/GOCtestnet.git --recursive'\\n"
+      printf "\\tGOC is based on EOS codes from https://github.com/EOSIO/eos"
       printf "\\tSee the wiki for instructions: https://github.com/EOSIO/eos/wiki\\n"
       exit 1
    fi
@@ -291,8 +292,15 @@
    printf "\\tTo verify your installation run the following commands:\\n"
 
    print_instructions
+   
+   printf "\\tFor GOC informations:\\n"
+   printf "\\tGOCLAB.IO website: https://www.goclab.io\\n"
+   printf "\\tEmail Address: contact@GoClab.io\\n"
+   printf "\\tTwitter：@GOC_lab\\n"
+   printf "\\tTelegram：t.me/GOC_Lab\\n"
+   printf "\\tMedium：https://medium.com/goc-lab\\n\\n\\n"
 
-   printf "\\tFor more information:\\n"
+   printf "\\tGOC is based on EOS system, For more information about EOS:\\n"
    printf "\\tEOSIO website: https://eos.io\\n"
    printf "\\tEOSIO Telegram channel @ https://t.me/EOSProject\\n"
    printf "\\tEOSIO resources: https://eos.io/resources/\\n"

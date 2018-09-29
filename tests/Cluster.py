@@ -1100,6 +1100,27 @@ class Cluster(object):
                 Utils.Print("ERROR: Failed to create account %s" % (eosioStakeAccount.name))
                 return None
 
+            gocioGNSAccount=copy.deepcopy(eosioAccount)
+            gocioGNSAccount.name="gocio.gns"
+            trans=biosNode.createAccount(gocioGNSAccount, eosioAccount, 0)
+            if trans is None:
+                Utils.Print("ERROR: Failed to create account %s" % (gocioGNSAccount.name))
+                return None
+
+            gocioGStakeAccount=copy.deepcopy(eosioAccount)
+            gocioGStakeAccount.name="gocio.gstake"
+            trans=biosNode.createAccount(gocioGStakeAccount, eosioAccount, 0)
+            if trans is None:
+                Utils.Print("ERROR: Failed to create account %s" % (gocioGStakeAccount.name))
+                return None
+
+            gocioVSAccount=copy.deepcopy(eosioAccount)
+            gocioVSAccount.name="gocio.vs"
+            trans=biosNode.createAccount(gocioVSAccount, eosioAccount, 0)
+            if trans is None:
+                Utils.Print("ERROR: Failed to create account %s" % (gocioVSAccount.name))
+                return None
+
             Node.validateTransaction(trans)
             transId=Node.getTransId(trans)
             if not biosNode.waitForTransInBlock(transId):
