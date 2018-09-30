@@ -169,4 +169,17 @@ encrypt_keys  使用校验和作为对称密钥， aes加密序列化的plain_ke
   根据设置选项的配置通过wallet_manager初始化各种参数
   如果传入了yubihsm-authkey，则根据yubihsm-url打开新钱包
 
-  
+## 4.进一步读源码
+
+### - Wallet_manager
+
+- 钱包的有效名字为字母|数字|._-，不是这几类的都无效
+- 初始timeout_time被设为max_time，check是否超时的时候判断timeout_time是否等于max_time即可
+- create一个新钱包之后会进行unlock-lock-unlock的test环节
+- create新钱包后可能会出现，原先存在重名的wallet文件在keosd运行的时候被删除，在这里eos预先判断是否在wallet表里存在同名wallet，若存在则先将其移除
+  同样的，open新钱包也会出现相似情况，因为可能在keosd运行的时候添加了一个新钱包文件
+- sign_transaction传入多个公钥的时候需要返回所有公钥对交易的签名，而sign_digest只能传入一个公钥
+
+### - 整体架构
+
+wallet_api_plugin 通过http_plugin设置回调函数，用户访问http的url，触发wallet_manager的回调函数，wallet_manager的函数调用了wallet_api基类（只有hpp文件）的函数，底层的三种wallet(se、soft、yubihsm)都是继承基类产生的。因此三者文件函数名都类似，只是做了多层封装。wallet_manager更多地是对所有的钱包进行处理，而soft_wallet更多针对单个钱包的处理实现。
