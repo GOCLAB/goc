@@ -156,6 +156,7 @@ void system_contract::gocupprop(const account_name owner, uint64_t id, const std
 
 void system_contract::gocsetpstage(const account_name owner, uint64_t id, uint16_t stage, time start_time)
 {
+    //stage change before gn voting wont affect gn stake freeze time, but if gn voted, freeze time wont be modified here
     require_auth(owner);
 
     eosio_assert(stage < 5, "available value for stage is (0-4), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled");
@@ -307,10 +308,12 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
             info.total_voter += 1;
 
         });
-        //freeze goc stake to bp vote end
-        userres.modify(res_itr, voter, [&](auto &res) {
-            res.goc_stake_freeze = proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period;
-        });
+        //freeze goc stake to bp vote end, no time end change check here, maybe need.
+        if(res_itr->goc_stake_freeze < proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period) {
+            userres.modify(res_itr, voter, [&](auto &res) {
+                res.goc_stake_freeze = proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period;
+            });
+        }
     }
 }
 

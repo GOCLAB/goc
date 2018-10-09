@@ -1532,7 +1532,7 @@ void mongo_db_plugin::plugin_initialize(const variables_map& options)
          mongocxx::uri uri = mongocxx::uri{uri_str};
          my->db_name = uri.database();
          if( my->db_name.empty())
-            my->db_name = "EOS";
+            my->db_name = "GOC";
          my->mongo_pool.emplace(uri);
 
          // hook up to signals on controller
