@@ -8,7 +8,7 @@ commands = [
     ('w', 'wallet',         stepStartWallet,            True,    "Start keosd, create wallet, fill with keys"),
     ('W', 'new-wallet',     stepStartNewWallet,         False,   "Empty Data, Start keosd, create wallet, fill with keys"),
     ('b', 'boot',           stepStartBoot,              True,    "Start boot node"),
-    ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (eosio.*)"),
+    ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (gocio.*)"),
     ('c', 'contracts',      stepInstallSystemContracts, True,    "Install system contracts (token, msig)"),
     ('t', 'tokens',         stepCreateTokens,           True,    "Create tokens"),
     ('S', 'sys-contract',   stepSetSystemContract,      True,    "Set system contract"),
@@ -29,7 +29,7 @@ commands = [
 
 ```js
 // eosio 默认账户的公钥私钥
-parser.add_argument('--public-key', metavar='', help="EOSIO Public Key", default='EOS8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr', dest="public_key")
+parser.add_argument('--public-key', metavar='', help="EOSIO Public Key", default='GOC8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr', dest="public_key")
 parser.add_argument('--private-Key', metavar='', help="EOSIO Private Key", default='5K463ynhZoCDDa4RDcr63cUwWLTnKqmdcoTKTHBjqoKfv4u5V7p', dest="private_key")
 // cleos 路径和 keosd 钱包端口
 parser.add_argument('--cleos', metavar='', help="Cleos command", default='../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 ')
@@ -41,7 +41,7 @@ parser.add_argument('--nodes-dir', metavar='', help="Path to nodes directory", d
 parser.add_argument('--genesis', metavar='', help="Path to genesis.json", default="./genesis.json")
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
-parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
+parser.add_argument('--symbol', metavar='', help="The gocio.system symbol", default='SYS')
 // 导入钱包的最大用户数量
 parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=50)
 // 导入钱包的最大公钥数量(同一个公钥可以给多个用户名使用)
@@ -90,51 +90,51 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
     > mkdir -p ./nodes/00-eosio/
 
-    > ../../build/programs/nodeos/nodeos    --max-irreversible-block-age -1    --contracts-console    --genesis-json /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/genesis.json    --blocks-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio/blocks    --config-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio    --data-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio    --chain-state-db-size-mb 1024    --http-server-address 127.0.0.1:8000    --p2p-listen-endpoint 127.0.0.1:9000    --max-clients 14    --p2p-max-nodes-per-host 14    --enable-stale-production    --max-transaction-time=1000    --producer-name eosio    --signature-provider=EOS8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr=KEY:5K463ynhZoCDDa4RDcr63cUwWLTnKqmdcoTKTHBjqoKfv4u5V7p    --verbose-http-errors    --plugin eosio::http_plugin    --plugin eosio::chain_api_plugin    --plugin eosio::producer_plugin    --plugin eosio::history_plugin    --plugin eosio::history_api_plugin    2>>./nodes/00-eosio/stderr
+    > ../../build/programs/nodeos/nodeos    --max-irreversible-block-age -1    --contracts-console    --genesis-json /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/genesis.json    --blocks-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio/blocks    --config-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio    --data-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/00-eosio    --chain-state-db-size-mb 1024    --http-server-address 127.0.0.1:8000    --p2p-listen-endpoint 127.0.0.1:9000    --max-clients 14    --p2p-max-nodes-per-host 14    --enable-stale-production    --max-transaction-time=1000    --producer-name eosio    --signature-provider=GOC8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr=KEY:5K463ynhZoCDDa4RDcr63cUwWLTnKqmdcoTKTHBjqoKfv4u5V7p    --verbose-http-errors    --plugin eosio::http_plugin    --plugin eosio::chain_api_plugin    --plugin eosio::producer_plugin    --plugin eosio::history_plugin    --plugin eosio::history_api_plugin    2>>./nodes/00-eosio/stderr
 
-4. ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (eosio.*)"),
+4. ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (gocio.*)"),
 
     loop
 
     same key for all
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 create account eosio eosio.bpay EOS8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 create account eosio gocio.bpay GOC8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr
 
     ```python
     systemAccounts = [
-        'eosio.bpay',
-        'eosio.msig',
-        'eosio.names',
-        'eosio.ram',
-        'eosio.ramfee',
-        'eosio.saving',
-        'eosio.stake',
-        'eosio.token',
-        'eosio.vpay',
-        'eosio.gocgns',
-        'eosio.gstake',
-        'eosio.gocvs',
+        'gocio.bpay',
+        'gocio.msig',
+        'gocio.names',
+        'gocio.ram',
+        'gocio.ramfee',
+        'gocio.saving',
+        'gocio.stake',
+        'gocio.token',
+        'gocio.vpay',
+        'gocio.gocgns',
+        'gocio.gstake',
+        'gocio.gocvs',
     ]
     ```
 5. ('c', 'contracts',      stepInstallSystemContracts, True,    "Install system contracts (token, msig)"),
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 set contract eosio.token ../../build/contracts/eosio.token/
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 set contract gocio.token ../../build/contracts/gocio.token/
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 set contract eosio.msig ../../build/contracts/eosio.msig/
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 set contract gocio.msig ../../build/contracts/gocio.msig/
 
     > 
 
 6. ('t', 'tokens',         stepCreateTokens,           True,    "Create tokens"),
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action eosio.token create '["eosio", "10000000000.0000 SYS"]' -p eosio.token
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token create '["gocio", "10000000000.0000 SYS"]' -p gocio.token
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action eosio.token issue '["eosio", "999999999.9998 SYS", "memo"]' -p eosio
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token issue '["gocio", "999999999.9998 SYS", "memo"]' -p eosio
 
 7. ('S', 'sys-contract',   stepSetSystemContract,      True,    "Set system contract"),
 
     > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 set contract eosio ../../build/contracts/eosio.system/
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action eosio setpriv '["eosio.msig", 1]' -p eosio@active
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action eosio setpriv '["gocio.msig", 1]' -p gocio@active
 
 8. ('T', 'stake',          stepCreateStakedAccounts,   True,    "Create staked accounts"),
 
@@ -142,7 +142,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
     > `useraaaaaaaa: total funds=209634957.2734 SYS, ram=0.2000 SYS, net=104816978.5367 SYS, cpu=104816978.5367 SYS, unstaked=1000.0000 SYS`
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system newaccount --transfer eosio useraaaaaaaa EOS69X3383RzBZj41k73CSjUNXM5MYGpnDxyPnWUKPEtYQmTBWz4D --stake-net "104816978.5367 SYS" --stake-cpu "104816978.5367 SYS" --buy-ram "0.2000 SYS"   
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system newaccount --transfer eosio useraaaaaaaa GOC69X3383RzBZj41k73CSjUNXM5MYGpnDxyPnWUKPEtYQmTBWz4D --stake-net "104816978.5367 SYS" --stake-cpu "104816978.5367 SYS" --buy-ram "0.2000 SYS"   
 
     > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 transfer eosio useraaaaaaaa "1000.0000 SYS
 
@@ -158,7 +158,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
     loop in producers[4]
 
-    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system regproducer producer111a EOS8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz https://producer111a.com/EOS8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz
+    > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system regproducer producer111a GOC8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz https://producer111a.com/GOC8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz
 
     > ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 get table eosio eosio producers -l 30
 
@@ -170,7 +170,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
     > mkdir -p ./nodes/01-producer111a/
 
-    > ../../build/programs/nodeos/nodeos    --max-irreversible-block-age -1    --contracts-console    --genesis-json /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/genesis.json    --blocks-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a/blocks    --config-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a    --data-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a    --chain-state-db-size-mb 1024    --http-server-address 127.0.0.1:8001    --p2p-listen-endpoint 127.0.0.1:9001    --max-clients 14    --p2p-max-nodes-per-host 14    --enable-stale-production    --max-transaction-time=1000    --producer-name producer111a    --signature-provider=EOS8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz=KEY:5KLGj1HGRWbk5xNmoKfrcrQHXvcVJBPdAckoiJgFftXSJjLPp7b    --verbose-http-errors    --plugin eosio::http_plugin    --plugin eosio::chain_api_plugin    --plugin eosio::producer_plugin    --p2p-peer-address localhost:9000    2>>./nodes/01-producer111a/stderr
+    > ../../build/programs/nodeos/nodeos    --max-irreversible-block-age -1    --contracts-console    --genesis-json /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/genesis.json    --blocks-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a/blocks    --config-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a    --data-dir /home/halo/Desktop/dev/eos-Dev/GOCint/tutorials/bios-boot-tutorial/nodes/01-producer111a    --chain-state-db-size-mb 1024    --http-server-address 127.0.0.1:8001    --p2p-listen-endpoint 127.0.0.1:9001    --max-clients 14    --p2p-max-nodes-per-host 14    --enable-stale-production    --max-transaction-time=1000    --producer-name producer111a    --signature-provider=GOC8imf2TDq6FKtLZ8mvXPWcd6EF2rQwo8zKdLNzsbU9EiMSt9Lwz=KEY:5KLGj1HGRWbk5xNmoKfrcrQHXvcVJBPdAckoiJgFftXSJjLPp7b    --verbose-http-errors    --plugin eosio::http_plugin    --plugin eosio::chain_api_plugin    --plugin eosio::producer_plugin    --p2p-peer-address localhost:9000    2>>./nodes/01-producer111a/stderr
 
 
 12. ('v', 'vote',           stepVote,                   True,    "Vote for producers"),

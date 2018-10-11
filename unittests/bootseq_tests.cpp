@@ -156,7 +156,7 @@ public:
     }
 
     asset get_balance( const account_name& act ) {
-         return get_currency_balance(N(eosio.token), symbol(CORE_SYMBOL), act);
+         return get_currency_balance(N(gocio.token), symbol(CORE_SYMBOL), act);
     }
 
     void set_code_abi(const account_name& account, const char* wast, const char* abi, const private_key_type* signer = nullptr) {
@@ -181,33 +181,33 @@ BOOST_AUTO_TEST_SUITE(bootseq_tests)
 BOOST_FIXTURE_TEST_CASE( bootseq_test, bootseq_tester ) {
     try {
 
-        // Create eosio.msig and eosio.token
-        create_accounts({N(eosio.msig), N(eosio.token), N(eosio.ram), N(eosio.ramfee), N(eosio.stake), N(eosio.vpay), N(eosio.bpay), N(eosio.saving), N(eosio.gns), N(eosio.gstake), N(eosio.vs) });
+        // Create eosio.msig and gocio.token
+        create_accounts({N(gocio.msig), N(gocio.token), N(gocio.ram), N(gocio.ramfee), N(gocio.stake), N(gocio.vpay), N(gocio.bpay), N(gocio.saving), N(gocio.gns), N(gocio.gstake), N(gocio.vs) });
 
         // Set code for the following accounts:
-        //  - eosio (code: eosio.bios) (already set by tester constructor)
-        //  - eosio.msig (code: eosio.msig)
+        //  - gocio (code: eosio.bios) (already set by tester constructor)
+        //  - gocio.msig (code: eosio.msig)
         //  - eosio.token (code: eosio.token)
-        set_code_abi(N(eosio.msig), eosio_msig_wast, eosio_msig_abi);//, &eosio_active_pk);
-        set_code_abi(N(eosio.token), eosio_token_wast, eosio_token_abi); //, &eosio_active_pk);
+        set_code_abi(N(gocio.msig), eosio_msig_wast, eosio_msig_abi);//, &eosio_active_pk);
+        set_code_abi(N(gocio.token), eosio_token_wast, eosio_token_abi); //, &eosio_active_pk);
 
         // Set privileged for eosio.msig and eosio.token
-        set_privileged(N(eosio.msig));
-        set_privileged(N(eosio.token));
+        set_privileged(N(gocio.msig));
+        set_privileged(N(gocio.token));
 
         // Verify eosio.msig and eosio.token is privileged
-        const auto& eosio_msig_acc = get<account_object, by_name>(N(eosio.msig));
+        const auto& eosio_msig_acc = get<account_object, by_name>(N(gocio.msig));
         BOOST_TEST(eosio_msig_acc.privileged == true);
-        const auto& eosio_token_acc = get<account_object, by_name>(N(eosio.token));
+        const auto& eosio_token_acc = get<account_object, by_name>(N(gocio.token));
         BOOST_TEST(eosio_token_acc.privileged == true);
 
 
         // Create SYS tokens in eosio.token, set its manager as eosio
         auto max_supply = core_from_string("10000000000.0000"); /// 1x larger than 1B initial tokens
         auto initial_supply = core_from_string("1000000000.0000"); /// 1x larger than 1B initial tokens
-        create_currency(N(eosio.token), config::system_account_name, max_supply);
+        create_currency(N(gocio.token), config::system_account_name, max_supply);
         // Issue the genesis supply of 1 billion SYS tokens to eosio.system
-        issue(N(eosio.token), config::system_account_name, config::system_account_name, initial_supply);
+        issue(N(gocio.token), config::system_account_name, config::system_account_name, initial_supply);
 
         auto actual = get_balance(config::system_account_name);
         BOOST_REQUIRE_EQUAL(initial_supply, actual);
@@ -230,7 +230,7 @@ BOOST_FIXTURE_TEST_CASE( bootseq_test, bootseq_tester ) {
            auto r = buyram(config::system_account_name, a.aname, asset(ram));
            BOOST_REQUIRE( !r->except_ptr );
 
-           r = delegate_bandwidth(N(eosio.stake), a.aname, asset(net), asset(cpu));
+           r = delegate_bandwidth(N(gocio.stake), a.aname, asset(net), asset(cpu));
            BOOST_REQUIRE( !r->except_ptr );
         }
 
@@ -268,7 +268,7 @@ BOOST_FIXTURE_TEST_CASE( bootseq_test, bootseq_tester ) {
         produce_blocks_for_n_rounds(2); // 2 rounds since new producer schedule is set when the first block of next round is irreversible
         auto active_schedule = control->head_block_state()->active_schedule;
         BOOST_TEST(active_schedule.producers.size() == 1);
-        BOOST_TEST(active_schedule.producers.front().producer_name == "eosio");
+        BOOST_TEST(active_schedule.producers.front().producer_name == "gocio");
 
         // Spend some time so the producer pay pool is filled by the inflation rate
         produce_min_num_of_blocks_to_spend_time_wo_inactive_prod(fc::seconds(30 * 24 * 3600)); // 30 days

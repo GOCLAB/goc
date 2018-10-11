@@ -63,8 +63,8 @@ void system_contract::gocstake(account_name payer)
 
     if(actual_quant > asset(0))
         INLINE_ACTION_SENDER(eosio::token, transfer)
-        (N(eosio.token), {payer, N(active)},
-        {payer, N(eosio.gstake), actual_quant, std::string("stake goc")});
+        (N(gocio.token), {payer, N(active)},
+        {payer, N(gocio.gstake), actual_quant, std::string("stake goc")});
 }
 
 void system_contract::gocunstake(account_name receiver)
@@ -84,8 +84,8 @@ void system_contract::gocunstake(account_name receiver)
     });
 
     INLINE_ACTION_SENDER(eosio::token, transfer)
-    (N(eosio.token), {N(eosio.gstake), N(active)},
-    {N(eosio.gstake), receiver, tokens_out, std::string("unstake GOC")});
+    (N(gocio.token), {N(gocio.gstake), N(active)},
+    {N(gocio.gstake), receiver, tokens_out, std::string("unstake GOC")});
 }
 
 void system_contract::gocnewprop(const account_name owner, asset fee, const std::string &pname, const std::string &pcontent, const std::string &url, uint16_t start_type)
@@ -101,8 +101,8 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
 
     //charge proposal fee to goc gn saving account
     INLINE_ACTION_SENDER(eosio::token, transfer)
-    (N(eosio.token), {owner, N(active)},
-     {owner, N(eosio.gns), fee, std::string("create proposal")});
+    (N(gocio.token), {owner, N(active)},
+     {owner, N(gocio.gns), fee, std::string("create proposal")});
 
     uint64_t new_id = _gocproposals.available_primary_key();
     //create proposal
@@ -156,6 +156,7 @@ void system_contract::gocupprop(const account_name owner, uint64_t id, const std
 
 void system_contract::gocsetpstage(const account_name owner, uint64_t id, uint16_t stage, time start_time)
 {
+    //stage change before gn voting wont affect gn stake freeze time, but if gn voted, freeze time wont be modified here
     require_auth(owner);
 
     eosio_assert(stage < 5, "available value for stage is (0-4), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled");
@@ -307,10 +308,12 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
             info.total_voter += 1;
 
         });
-        //freeze goc stake to bp vote end
-        userres.modify(res_itr, voter, [&](auto &res) {
-            res.goc_stake_freeze = proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period;
-        });
+        //freeze goc stake to bp vote end, no time end change check here, maybe need.
+        if(res_itr->goc_stake_freeze < proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period) {
+            userres.modify(res_itr, voter, [&](auto &res) {
+                res.goc_stake_freeze = proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period;
+            });
+        }
     }
 }
 

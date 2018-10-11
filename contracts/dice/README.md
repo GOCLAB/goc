@@ -56,19 +56,19 @@ Example game session using cleos
 cleos set contract eosio build/contracts/eosio.bios -p eosio
 ````
 
-##### Ceate eosio.token account
+##### Ceate gocio.token account
 ````bash
-cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+cleos create account eosio gocio.token GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
 ````
 
-##### Set eosio.token contract to eosio.token account
+##### Set gocio.token contract to gocio.token account
 ````bash
-cleos set contract eosio.token build/contracts/eosio.token -p eosio.token
+cleos set contract gocio.token build/contracts/eosio.token -p gocio.token
 ````
 
 ##### Create dice account
 ````bash
-cleos create account eosio dice EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+cleos create account eosio dice GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
 ````
 
 ##### Set dice contract to dice account
@@ -78,37 +78,37 @@ cleos set contract dice build/contracts/dice -p dice
 
 ##### Create native EOS token
 ````bash
-cleos push action eosio.token create '[ "eosio", "1000000000.0000 EOS", 0, 0, 0]' -p eosio.token
+cleos push action gocio.token create '[ "gocio", "1000000000.0000 EOS", 0, 0, 0]' -p gocio.token
 ````
 
 ##### Create alice account
 ````bash
-cleos create account eosio alice EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+cleos create account eosio alice GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
 ````
 
 ##### Create bob account
 ````bash
-cleos create account eosio bob EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+cleos create account eosio bob GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
 ````
 
 ##### Issue 1000 EOS to alice
 ````bash
-cleos push action eosio.token issue '[ "alice", "1000.0000 EOS", "" ]' -p eosio
+cleos push action gocio.token issue '[ "alice", "1000.0000 EOS", "" ]' -p eosio
 ````
 
 ##### Issue 1000 EOS to bob
 ````bash
-cleos push action eosio.token issue '[ "bob", "1000.0000 EOS", "" ]' -p eosio
+cleos push action gocio.token issue '[ "bob", "1000.0000 EOS", "" ]' -p eosio
 ````
 
 ##### Allow dice contract to make transfers on alice behalf (deposit)
 ````bash
-cleos set account permission alice active '{"threshold": 1,"keys": [{"key": "EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4","weight": 1}],"accounts": [{"permission":{"actor":"dice","permission":"active"},"weight":1}]}' owner -p alice
+cleos set account permission alice active '{"threshold": 1,"keys": [{"key": "GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4","weight": 1}],"accounts": [{"permission":{"actor":"dice","permission":"active"},"weight":1}]}' owner -p alice
 ````
 
 ##### Allow dice contract to make transfers on bob behalf (deposit)
 ````bash
-cleos set account permission bob active '{"threshold": 1,"keys": [{"key": "EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4","weight": 1}],"accounts": [{"permission":{"actor":"dice","permission":"active"},"weight":1}]}' owner -p bob
+cleos set account permission bob active '{"threshold": 1,"keys": [{"key": "GOC7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4","weight": 1}],"accounts": [{"permission":{"actor":"dice","permission":"active"},"weight":1}]}' owner -p bob
 ````
 
 ##### Alice deposits 100 EOS into the dice contract
@@ -263,7 +263,7 @@ cleos push action dice withdraw '[ "alice", "103.0000 EOS" ]' -p alice
 
 ##### Balance of alice after withdraw
 ````bash
-cleos get currency balance eosio.token alice eos
+cleos get currency balance gocio.token alice eos
 1003.0000 EOS
 ````
 

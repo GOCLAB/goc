@@ -1796,7 +1796,7 @@ BOOST_FIXTURE_TEST_CASE(permission_tests, TESTER) { try {
          .account    = N(testapi),
          .permission = N(active),
          .pubkeys    = {
-            public_key_type(string("EOS7GfRtyDWWgxV88a5TRaYY59XmHptyfjsFmHHfioGNJtPjpSmGX"))
+            public_key_type(string("GOC7GfRtyDWWgxV88a5TRaYY59XmHptyfjsFmHHfioGNJtPjpSmGX"))
          }
       })
    );
@@ -1808,7 +1808,7 @@ BOOST_FIXTURE_TEST_CASE(permission_tests, TESTER) { try {
          .permission = N(active),
          .pubkeys    = {
             get_public_key(N(testapi), "active"),
-            public_key_type(string("EOS7GfRtyDWWgxV88a5TRaYY59XmHptyfjsFmHHfioGNJtPjpSmGX"))
+            public_key_type(string("GOC7GfRtyDWWgxV88a5TRaYY59XmHptyfjsFmHHfioGNJtPjpSmGX"))
          }
       })
    );
@@ -2026,7 +2026,7 @@ BOOST_FIXTURE_TEST_CASE(permission_usage_tests, TESTER) { try {
 
    push_action(config::system_account_name, linkauth::get_name(), N(bob), fc::mutable_variant_object()
            ("account", "bob")
-           ("code", "eosio")
+           ("code", "gocio")
            ("type", "reqauth")
            ("requirement", "perm1")
    );

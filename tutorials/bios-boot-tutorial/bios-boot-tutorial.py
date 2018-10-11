@@ -18,18 +18,18 @@ walletPassword = "PW5KkvdvuE5YU1P9B4c5qVziV9k4tnx7QANvgDiE2qDxUa2su9Yth"
 fastUnstakeSystem = './fast.refund/eosio.system/eosio.system.wasm'
 
 systemAccounts = [
-    'eosio.bpay',
-    'eosio.msig',
-    'eosio.names',
-    'eosio.ram',
-    'eosio.ramfee',
-    'eosio.saving',
-    'eosio.stake',
-    'eosio.token',
-    'eosio.vpay',
-    'eosio.gns',
-    'eosio.gstake',
-    'eosio.vs',
+    'gocio.bpay',
+    'gocio.msig',
+    'gocio.names',
+    'gocio.ram',
+    'gocio.ramfee',
+    'gocio.saving',
+    'gocio.stake',
+    'gocio.token',
+    'gocio.vpay',
+    'gocio.gns',
+    'gocio.gstake',
+    'gocio.vs',
 ]
 
 def jsonArg(a):
@@ -158,7 +158,7 @@ def startProducers(b, e):
 
 def createSystemAccounts():
     for a in systemAccounts:
-        run(args.cleos + 'create account eosio ' + a + ' ' + args.public_key)
+        run(args.cleos + 'create account gocio ' + a + ' ' + args.public_key)
 
 def intToCurrency(i):
     return '%d.%04d %s' % (i // 10000, i % 10000, args.symbol)
@@ -197,16 +197,16 @@ def createStakedAccounts(b, e):
         stakeCpu = stake - stakeNet
         print('%s: total funds=%s, ram=%s, net=%s, cpu=%s, unstaked=%s' % (a['name'], intToCurrency(a['funds']), intToCurrency(ramFunds), intToCurrency(stakeNet), intToCurrency(stakeCpu), intToCurrency(unstaked)))
         assert(funds == ramFunds + stakeNet + stakeCpu + unstaked)
-        retry(args.cleos + 'system newaccount --transfer eosio %s %s --stake-net "%s" --stake-cpu "%s" --buy-ram "%s"   ' % 
+        retry(args.cleos + 'system newaccount --transfer gocio %s %s --stake-net "%s" --stake-cpu "%s" --buy-ram "%s"   ' % 
             (a['name'], a['pub'], intToCurrency(stakeNet), intToCurrency(stakeCpu), intToCurrency(ramFunds)))
         if unstaked:
-            retry(args.cleos + 'transfer eosio "%s" "%s"' % (a['name'], intToCurrency(unstaked)))
+            retry(args.cleos + 'transfer gocio "%s" "%s"' % (a['name'], intToCurrency(unstaked)))
 
 def createGocStakedAccounts(b, e):
-    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "proposal"]\' -p eosio' % intToCurrency(20000000000))
+    run(args.cleos + 'push action gocio.token issue \'["gocio", "%s", "proposal"]\' -p gocio' % intToCurrency(20000000000))
     for i in range(b, e):
         a = accounts[i]
-        run(args.cleos + 'transfer eosio %s "%s"' % (a['name'], intToCurrency(2000000000)))
+        run(args.cleos + 'transfer gocio %s "%s"' % (a['name'], intToCurrency(2000000000)))
         run(args.cleos + 'system gocstake %s ' % (a['name']))
 
 def createGocProposals(b, e):
@@ -225,7 +225,7 @@ def regProducers(b, e):
         run(args.cleos + 'system regproducer ' + a['name'] + ' ' + a['pub'] + ' https://' + a['name'] + '.com' + '/' + a['pub'])
 
 def listProducers():
-    run(args.cleos + 'get table eosio eosio producers -l 30')
+    run(args.cleos + 'get table gocio gocio producers -l 30')
 
 def vote(b, e):
     for i in range(b, e):
@@ -235,7 +235,7 @@ def vote(b, e):
         retry(args.cleos + 'system voteproducer prods ' + voter + ' ' + prods)
 
 def claimRewards():
-    table = getJsonOutput(args.cleos + 'get table eosio eosio producers -l 100')
+    table = getJsonOutput(args.cleos + 'get table gocio gocio producers -l 100')
     times = []
     for row in table['rows']:
         if row['unpaid_blocks'] and not row['last_claim_time']:
@@ -252,7 +252,7 @@ def proxyVotes(b, e):
         retry(args.cleos + 'system voteproducer proxy ' + voter + ' ' + proxy)
 
 def updateAuth(account, permission, parent, controller):
-    run(args.cleos + 'push action eosio updateauth' + jsonArg({
+    run(args.cleos + 'push action gocio updateauth' + jsonArg({
         'account': account,
         'permission': permission,
         'parent': parent,
@@ -283,11 +283,11 @@ def msigProposeReplaceSystem(proposer, proposalName):
     requestedPermissions = []
     for i in range(firstProducer, firstProducer + numProducers):
         requestedPermissions.append({'actor': accounts[i]['name'], 'permission': 'active'})
-    trxPermissions = [{'actor': 'eosio', 'permission': 'active'}]
+    trxPermissions = [{'actor': 'gocio', 'permission': 'active'}]
     with open(fastUnstakeSystem, mode='rb') as f:
-        setcode = {'account': 'eosio', 'vmtype': 0, 'vmversion': 0, 'code': f.read().hex()}
+        setcode = {'account': 'gocio', 'vmtype': 0, 'vmversion': 0, 'code': f.read().hex()}
     run(args.cleos + 'multisig propose ' + proposalName + jsonArg(requestedPermissions) + 
-        jsonArg(trxPermissions) + 'eosio setcode' + jsonArg(setcode) + ' -p ' + proposer)
+        jsonArg(trxPermissions) + 'gocio setcode' + jsonArg(setcode) + ' -p ' + proposer)
 
 def msigApproveReplaceSystem(proposer, proposalName):
     for i in range(firstProducer, firstProducer + numProducers):
@@ -299,7 +299,7 @@ def msigExecReplaceSystem(proposer, proposalName):
     retry(args.cleos + 'multisig exec ' + proposer + ' ' + proposalName + ' -p ' + proposer)
 
 def msigReplaceSystem():
-    run(args.cleos + 'push action eosio buyrambytes' + jsonArg(['eosio', accounts[0]['name'], 200000]) + '-p eosio')
+    run(args.cleos + 'push action gocio buyrambytes' + jsonArg(['gocio', accounts[0]['name'], 200000]) + '-p gocio')
     sleep(1)
     msigProposeReplaceSystem(accounts[0]['name'], 'fast.unstake')
     sleep(1)
@@ -326,20 +326,20 @@ def stepStartNewWallet():
 def stepStartWallet():
     startWallet() 
 def stepStartBoot():
-    startNode(0, {'name': 'eosio', 'pvt': args.private_key, 'pub': args.public_key})
+    startNode(0, {'name': 'gocio', 'pvt': args.private_key, 'pub': args.public_key})
     sleep(1.5)
 def stepInstallSystemContracts():
-    run(args.cleos + 'set contract eosio.token ' + args.contracts_dir + 'eosio.token/')
-    run(args.cleos + 'set contract eosio.msig ' + args.contracts_dir + 'eosio.msig/')
+    run(args.cleos + 'set contract gocio.token ' + args.contracts_dir + 'eosio.token/ ')
+    run(args.cleos + 'set contract gocio.msig ' + args.contracts_dir + 'eosio.msig/ ')
 def stepCreateTokens():
-    run(args.cleos + 'push action eosio.token create \'["eosio", "10000000000.0000 %s"]\' -p eosio.token' % (args.symbol))
+    run(args.cleos + 'push action gocio.token create \'["gocio", "10000000000.0000 %s"]\' -p gocio.token' % (args.symbol))
     totalAllocation = allocateFunds(0, len(accounts))
-    run(args.cleos + 'push action eosio.token issue \'["eosio", "%s", "memo"]\' -p eosio' % intToCurrency(totalAllocation))
+    run(args.cleos + 'push action gocio.token issue \'["gocio", "%s", "memo"]\' -p gocio' % intToCurrency(totalAllocation))
     sleep(1)
 def stepSetSystemContract():
-    retry(args.cleos + 'set contract eosio ' + args.contracts_dir + 'eosio.system/')
+    retry(args.cleos + 'set contract gocio ' + args.contracts_dir + 'eosio.system/')
     sleep(1)
-    run(args.cleos + 'push action eosio setpriv' + jsonArg(['eosio.msig', 1]) + '-p eosio@active')
+    run(args.cleos + 'push action gocio setpriv' + jsonArg(['gocio.msig', 1]) + '-p gocio@active')
 def stepCreateStakedAccounts():
     createStakedAccounts(0, len(accounts))
 def stepGOC():
@@ -361,14 +361,14 @@ def stepVote():
 def stepProxyVotes():
     proxyVotes(0, 0 + args.num_voters)
 def stepResign():
-    resign('eosio', 'eosio.prods')
+    resign('gocio', 'gocio.prods')
     for a in systemAccounts:
-        resign(a, 'eosio')
+        resign(a, 'gocio')
 def stepTransfer():
     while True:
         randomTransfer(0, args.num_senders)
 def stepLog():
-    run('tail -n 60 ' + args.nodes_dir + '00-eosio/stderr')
+    run('tail -n 60 ' + args.nodes_dir + '00-gocio/stderr')
 
 # Command Line Arguments
 
@@ -379,7 +379,7 @@ commands = [
     ('w', 'wallet',         stepStartWallet,            True,    "Start keosd, create wallet, fill with keys"),
     ('W', 'new-wallet',     stepStartNewWallet,         False,   "Empty Data, Start keosd, create wallet, fill with keys"),
     ('b', 'boot',           stepStartBoot,              True,    "Start boot node"),
-    ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (eosio.*)"),
+    ('s', 'sys',            createSystemAccounts,       True,    "Create system accounts (gocio.*)"),
     ('c', 'contracts',      stepInstallSystemContracts, True,    "Install system contracts (token, msig)"),
     ('t', 'tokens',         stepCreateTokens,           True,    "Create tokens"),
     ('S', 'sys-contract',   stepSetSystemContract,      True,    "Set system contract"),
@@ -390,13 +390,13 @@ commands = [
     ('v', 'vote',           stepVote,                   True,    "Vote for producers"),
     ('R', 'claim',          claimRewards,               True,    "Claim rewards"),
     ('x', 'proxy',          stepProxyVotes,             True,    "Proxy votes"),
-    ('q', 'resign',         stepResign,                 True,    "Resign eosio"),
+    ('q', 'resign',         stepResign,                 True,    "Resign gocio"),
     ('m', 'msg-replace',    msigReplaceSystem,          False,   "Replace system contract using msig"),
     ('X', 'xfer',           stepTransfer,               False,   "Random transfer tokens (infinite loop)"),
     ('l', 'log',            stepLog,                    True,    "Show tail of node's log"),
 ]
 
-parser.add_argument('--public-key', metavar='', help="EOSIO Public Key", default='EOS8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr', dest="public_key")
+parser.add_argument('--public-key', metavar='', help="EOSIO Public Key", default='GOC8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr', dest="public_key")
 parser.add_argument('--private-Key', metavar='', help="EOSIO Private Key", default='5K463ynhZoCDDa4RDcr63cUwWLTnKqmdcoTKTHBjqoKfv4u5V7p', dest="private_key")
 parser.add_argument('--cleos', metavar='', help="Cleos command", default='../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 ')
 parser.add_argument('--nodeos', metavar='', help="Path to nodeos binary", default='../../build/programs/nodeos/nodeos')
@@ -406,13 +406,13 @@ parser.add_argument('--nodes-dir', metavar='', help="Path to nodes directory", d
 parser.add_argument('--genesis', metavar='', help="Path to genesis.json", default="./genesis.json")
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
-parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='GOC')
-parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=5000)
-parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=5000)
+parser.add_argument('--symbol', metavar='', help="The gocio.system symbol", default='GOC')
+parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=50)
+parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=50)
 parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.2)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=1000)
-parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=21)
+parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=9)
 parser.add_argument('--min-producer-funds', metavar='', help="Minimum producer funds", type=float, default=1000.0000)
 parser.add_argument('--num-producers-vote', metavar='', help="Number of producers for which each user votes", type=int, default=4)
 parser.add_argument('--num-voters', metavar='', help="Number of voters", type=int, default=50)

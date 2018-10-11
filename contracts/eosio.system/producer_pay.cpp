@@ -27,7 +27,7 @@ namespace eosiosystem {
    void system_contract::onblock( block_timestamp timestamp, account_name producer ) {
       using namespace eosio;
 
-      require_auth(N(eosio));
+      require_auth(N(gocio));
 
       /** until activated stake crosses this threshold no new rewards are paid */
       if( _gstate.total_activated_stake < min_activated_stake )
@@ -90,7 +90,7 @@ namespace eosiosystem {
 
       eosio_assert( ct - prod.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
 
-      const asset token_supply   = token( N(eosio.token)).get_supply(symbol_type(system_token_symbol).name() );
+      const asset token_supply   = token( N(gocio.token)).get_supply(symbol_type(system_token_symbol).name() );
       const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
 
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
@@ -109,24 +109,24 @@ namespace eosiosystem {
          auto to_per_block_pay   = to_producers / 4;
          auto to_per_vote_pay    = to_producers - to_per_block_pay;
 
-         INLINE_ACTION_SENDER(eosio::token, issue)( N(eosio.token), {{N(eosio),N(active)}},
-                                                    {N(eosio), asset(new_tokens), std::string("issue tokens for producer pay and savings")} );
+         INLINE_ACTION_SENDER(eosio::token, issue)( N(gocio.token), {{N(gocio),N(active)}},
+                                                    {N(gocio), asset(new_tokens), std::string("issue tokens for producer pay and savings")} );
 
          //GOC add
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.vs), asset(to_voters), "fund voter bucket" } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.vs), asset(to_voters), "fund voter bucket" } );
          //GOC add
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.gns), asset(to_gns), "fund gn bucket" } );                                              
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.gns), asset(to_gns), "fund gn bucket" } );                                              
          
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.saving), asset(to_savings), "unallocated inflation" } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.saving), asset(to_savings), "unallocated inflation" } );
 
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.bpay), asset(to_per_block_pay), "fund per-block bucket" } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.bpay), asset(to_per_block_pay), "fund per-block bucket" } );
 
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.vpay), asset(to_per_vote_pay), "fund per-vote bucket" } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.vpay), asset(to_per_vote_pay), "fund per-vote bucket" } );
 
          _gstate.pervote_bucket  += to_per_vote_pay;
          _gstate.perblock_bucket += to_per_block_pay;
@@ -242,12 +242,12 @@ namespace eosiosystem {
       });
 
       if( producer_per_block_pay > 0 ) {
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.bpay),N(active)},
-                                                       { N(eosio.bpay), owner, asset(producer_per_block_pay), std::string("producer block pay") } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.bpay),N(active)},
+                                                       { N(gocio.bpay), owner, asset(producer_per_block_pay), std::string("producer block pay") } );
       }
       if( producer_per_vote_pay > 0 ) {
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.vpay),N(active)},
-                                                       { N(eosio.vpay), owner, asset(producer_per_vote_pay), std::string("producer vote pay") } );
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vpay),N(active)},
+                                                       { N(gocio.vpay), owner, asset(producer_per_vote_pay), std::string("producer vote pay") } );
       }
    }
 
