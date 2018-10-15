@@ -2618,4 +2618,41 @@ BOOST_FIXTURE_TEST_CASE( setram_effect, eosio_system_tester ) try {
 
 } FC_LOG_AND_RETHROW()
 
+BOOST_FIXTURE_TEST_CASE( goc_stake_unstake, eosio_system_tester ) try {
+   
+   produce_blocks( 1 );
+
+   BOOST_REQUIRE_EQUAL( core_from_string("0.0000"), get_balance( "alice1111111" ) );
+   transfer( "gocio", "alice1111111", core_from_string("50000.0000"), "gocio" );
+   
+   produce_blocks( 1 );
+   
+   //stake with insufficient balance  
+   BOOST_REQUIRE_EQUAL( core_from_string("50000.0000"), get_balance( "alice1111111" ) );
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("overdrawn balance"), goc_stake("alice1111111") );
+
+   produce_blocks( 1 );
+   
+   //stake with sufficient balance
+   transfer( "gocio", "alice1111111", core_from_string("50000.0000"), "gocio" );
+   BOOST_REQUIRE_EQUAL( core_from_string("100000.0000"), get_balance( "alice1111111" ) );
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("alice1111111") );
+   
+   produce_blocks( 1 );
+
+   BOOST_REQUIRE_EQUAL( core_from_string("0.0000"), get_balance( "alice1111111" ) );
+
+   produce_blocks( 1 );
+
+   //unstake when not frozen
+   BOOST_REQUIRE_EQUAL( success(), goc_unstake("alice1111111") );
+   BOOST_REQUIRE_EQUAL( core_from_string("100000.0000"), get_balance( "alice1111111" ) );
+
+   produce_blocks( 1 );
+
+
+
+
+} FC_LOG_AND_RETHROW()
+
 BOOST_AUTO_TEST_SUITE_END()

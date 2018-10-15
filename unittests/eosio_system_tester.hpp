@@ -283,6 +283,14 @@ public:
                           );
    }
 
+   action_result goc_stake( const account_name& payer) {
+         return push_action( name(payer), N(gocstake), mvo()("payer",payer));
+   }
+   
+   action_result goc_unstake( const account_name& receiver) {
+         return push_action( name(receiver), N(gocunstake), mvo()("receiver",receiver));
+   }
+
    static fc::variant_object producer_parameters_example( int n ) {
       return mutable_variant_object()
          ("max_block_net_usage", 10000000 + n )
