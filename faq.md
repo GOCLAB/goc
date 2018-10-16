@@ -30,7 +30,25 @@
 
 * 下载源码
   * 在新建的GOC的工作目录（以下简写成$GOC）下执行`git clone [https://github.com/BlockchainLabFudan/GOCint.git](https://github.com/BlockchainLabFudan/GOCint.git) --recursive`或直接根据上述git地址在sourceTree中拉取。
-  * GOC.1011_132新增需要使用ssh获取submodule fc，不再使用http/https来获取，配置ssh的方法参考[https://segmentfault.com/a/1190000002645623]或者[https://www.appveyor.com/docs/how-to/private-git-sub-modules/],(windows需使用管理员模式打开git bash操作)
+  * GOC.1011_132新增需要使用ssh获取submodule fc，不再使用http/https来获取，配置ssh的方法参考[here](https://segmentfault.com/a/1190000002645623), (windows需使用管理员模式打开git bash操作)。步骤为：
+  ``` sheel
+      # 配置git账户
+      git config --global user.name "yourname"
+      git config --global user.email "youremail"
+
+      #生成ssh密钥对
+      ssh-keygen -t rsa -C "youremail"
+
+      #打开密钥管理器
+      eval "$(ssh-agent -s)"
+
+      #将密钥交给agent管理
+      ssh-add ~/.ssh/id_rsa
+
+      #从id_rsa.pub里clip公钥出来
+
+      #登录github，点击账户 - settings-ssh and gpg keys - new ssh key，粘贴公钥
+  ```
   * 使用ssh的原因：简单的说就是HTTP协议采用的是明文传输也不对通信双方进行身份认证，而HTTPS对传输的报文进行了加密。而ssh采用非对称加密的方式使得用户可以使用公钥登录，保证私有库不会造成密码泄露，更加安全。
 
 ## 编译
@@ -42,6 +60,7 @@
 * 常见编译问题
   * 编译中提示未下载依赖的子仓库
     * 按照命令行出错提示抓取
+    * 使用`git submodule update --init --recursive`获取(--remote会下载其他不需要的依赖，不需要使用remote)，如果不行可以尝试先用`git submodule sync`同步
   * 某些依赖库的git tag没有搞定, 暂时解决方案: 
     * `libraries/appbase/version.cmake.in` 中找到 COMMAND @GIT_EXECUTABLE@ describe --tags 替换为： COMMAND @GIT_EXECUTABLE@ describe --tags --dirty
   * 编译提示内存不足
