@@ -1,4 +1,4 @@
-# 加入远端服务器并设置本机producer教程
+# 加入远端服务器并设置本机producer教程（GOC.1011_132）
 
 ## 1.开启本地钱包服务
 
@@ -10,11 +10,15 @@
 5JSmNkiGSrsHsPVjoZYRR29GqFyhiaXrfD7pkzZoLoFjUKFccLv  
 GOC6N7FuKhCoEf2NUfsmZ5Gux4fNn2gMiroMNsR6tfgUT7VxNQEV3
 
+**centos里不需要--to-console，create_key直接导入钱包，之后需提供钱包密码使用wallet private_keys查看生成公钥的对应私钥，因此也省去了下面的导入步骤**
+
 ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://47.52.114.54:8000 wallet import -n default --private-key 5JSmNkiGSrsHsPVjoZYRR29GqFyhiaXrfD7pkzZoLoFjUKFccLv
 
 ## 3.在服务器上建立账户
 
-### 如果eosio没钱需要给它先生钱，不然会报错
+**weiyan为自定义名称，需要修改**
+
+### 如果gocio没钱需要给它先生钱，不然会报错
 
 ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://47.52.114.54:8000 push action gocio.token issue '["gocio", "1000000000.0003 GOC", "memo"]' -p eosio
 
@@ -31,6 +35,8 @@ GOC6N7FuKhCoEf2NUfsmZ5Gux4fNn2gMiroMNsR6tfgUT7VxNQEV3
 ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://47.52.114.54:8000 system regproducer weiyan GOC6N7FuKhCoEf2NUfsmZ5Gux4fNn2gMiroMNsR6tfgUT7VxNQEV3 https://weiyan.com/GOC6N7FuKhCoEf2NUfsmZ5Gux4fNn2gMiroMNsR6tfgUT7VxNQEV3
 
 ## 4.开启nodeos，开启本地端口，日志记录在stderr下
+
+**此处需要修改对应的genesis.json，并且路径也需要修改，如果需要外部访问可以将127.0.0.1修改为0.0.0.0**
 
 rm -rf ./nodes/weiyan/  
 mkdir -p ./nodes/weiyan/  

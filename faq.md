@@ -29,7 +29,9 @@
   * GOC的代码在GitHub私有库上，由于项目结构复杂，开发人员众多，建议统一采用sourceTree(下载地址：[](https://www.sourcetreeapp.com/) 仅支持windows和mac版)进行管理，以便查看其他协作人员（包括EOS人员）提交的代码和注释。
 
 * 下载源码
-  * 在新建的GOC的工作目录（以下简写成$GOC）下执行git clone [https://github.com/bxliu/GOCint.git](https://github.com/bxliu/GOCint.git) 或直接根据上述git地址在sourceTree中拉取。
+  * 在新建的GOC的工作目录（以下简写成$GOC）下执行`git clone [https://github.com/BlockchainLabFudan/GOCint.git](https://github.com/BlockchainLabFudan/GOCint.git) --recursive`或直接根据上述git地址在sourceTree中拉取。
+  * GOC.1011_132新增需要使用ssh获取submodule fc，不再使用http/https来获取，配置ssh的方法参考[https://segmentfault.com/a/1190000002645623]或者[https://www.appveyor.com/docs/how-to/private-git-sub-modules/],(windows需使用管理员模式打开git bash操作)
+  * 使用ssh的原因：简单的说就是HTTP协议采用的是明文传输也不对通信双方进行身份认证，而HTTPS对传输的报文进行了加密。而ssh采用非对称加密的方式使得用户可以使用公钥登录，保证私有库不会造成密码泄露，更加安全。
 
 ## 编译
 * 编译源码
@@ -69,7 +71,7 @@
 * bios-boot-tutorial.py常用参数 [详情](./bios-boot-tutorial.md)
   * 注：每执行下面一句话，请参考$GOC/tutorials/bios-boot-tutorial/output.log文件查看调用的命令。output.log部分内容如下： ![avatar](./avatar/outputlog.png)
   * ./bios-boot-tutorial.py -k是干掉所有进程
-  * ./bios-boot-tutorial.py -w和-W是启动keosd钱包
+  * ./bios-boot-tutorial.py -w和-W是启动keosd钱包,(W是初始化钱包并导入公私钥对，w是启动之前已经初始化的钱包)
   * ./bios-boot-tutorial.py -b是启动nodeos
   * ./bios-boot-tutorial.py -sctST，做一串工作，分别是生成必要的系统账户，部署系统合约，发GOC币，部署system合约（就是我们主要修改的地方），生成一系列用户账户
   * ./bios-boot-tutorial.py -g是我增加的goc部分数据
