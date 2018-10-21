@@ -1242,6 +1242,7 @@ struct create_governance_proposal_subcommand {
     string name;
     string content;
     string url;
+    string hash;
     uint16_t start_type=0;
 
 
@@ -1252,6 +1253,7 @@ struct create_governance_proposal_subcommand {
         create_proposal->add_option("name", name, localized("The name of created proposal"))->required();
         create_proposal->add_option("content", content, localized("The content of created proposal"))->required();
         create_proposal->add_option("url", url, localized("The url of created proposal"))->required();
+        create_proposal->add_option("hash", hash, localized("The hash of updating proposal"))->required();
         create_proposal->add_option("--start-type", start_type, localized("Set start type, 1 for start vote, 2 for start bp vote(DEBUG)"));
         add_standard_transaction_options(create_proposal);
         // only allow 0,1,2 here
@@ -1264,6 +1266,7 @@ struct create_governance_proposal_subcommand {
                ("pname", name)
                ("pcontent", content)
                ("url", url)
+               ("hash", hash)
                ("start_type", start_type);
             send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocnewprop), act_payload)});
          });
@@ -1278,6 +1281,7 @@ struct update_governance_proposal_subcommand {
     string name;
     string content;
     string url;
+    string hash;
 
     update_governance_proposal_subcommand(CLI::App* actionRoot) {
         auto update_proposal = actionRoot->add_subcommand("updateproposal", localized("Update governance proposal"));
@@ -1286,6 +1290,8 @@ struct update_governance_proposal_subcommand {
         update_proposal->add_option("name", name, localized("The name of updating proposal"))->required();
         update_proposal->add_option("content", content, localized("The content of updating proposal"))->required();
         update_proposal->add_option("url", url, localized("The url of updating proposal"))->required();
+        update_proposal->add_option("hash", hash, localized("The hash of updating proposal"))->required();
+
         //add_standard_transaction_options(update_proposal);
         update_proposal->set_callback([this] {
             fc::variant act_payload = fc::mutable_variant_object()
@@ -1293,7 +1299,8 @@ struct update_governance_proposal_subcommand {
                ("id", id)
                ("pname", name)
                ("pcontent", content)
-               ("url", url);
+               ("url", url)
+               ("hash", hash);
             send_actions({create_action({permission_level{owner_str,config::active_name}}, config::system_account_name, N(gocupprop), act_payload)});
          });
 

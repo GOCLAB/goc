@@ -178,6 +178,7 @@
          {"name":"pname", "type":"string"},
          {"name":"pcontent", "type":"string"},
          {"name":"url", "type":"string"},
+         {"name":"hash", "type":"string"},
          {"name":"start_type", "type":"uint16"}
       ]
     },{
@@ -188,7 +189,8 @@
          {"name":"id", "type":"uint64"},         
          {"name":"pname", "type":"string"},
          {"name":"pcontent", "type":"string"},
-         {"name":"url", "type":"string"}
+         {"name":"url", "type":"string"},
+         {"name":"hash", "type":"string"}
       ]
     },{
       "name": "gocsetpstage",

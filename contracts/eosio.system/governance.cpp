@@ -61,6 +61,7 @@ void system_contract::gocstake(account_name payer)
         }
     }
 
+    //stake goc to gocio.gstake account
     if(actual_quant > asset(0))
         INLINE_ACTION_SENDER(eosio::token, transfer)
         (N(gocio.token), {payer, N(active)},
@@ -83,12 +84,13 @@ void system_contract::gocunstake(account_name receiver)
         res.governance_stake = asset(0);
     });
 
+    //return goc from gocio.gstake account, here assume gocio.gstake is always full...
     INLINE_ACTION_SENDER(eosio::token, transfer)
     (N(gocio.token), {N(gocio.gstake), N(active)},
     {N(gocio.gstake), receiver, tokens_out, std::string("unstake GOC")});
 }
 
-void system_contract::gocnewprop(const account_name owner, asset fee, const std::string &pname, const std::string &pcontent, const std::string &url, uint16_t start_type)
+void system_contract::gocnewprop(const account_name owner, asset fee, const std::string &pname, const std::string &pcontent, const std::string &url, const std::string &hash, uint16_t start_type)
 {
     require_auth(owner);
     auto time_now = now();
@@ -96,6 +98,7 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     eosio_assert(pname.size() < 512, "name too long");
     eosio_assert(pcontent.size() < 1024, "content too long");
     eosio_assert(url.size() < 512, "url too long");
+    eosio_assert(hash.size() < 512, "hash too long");
     eosio_assert(fee.symbol == asset().symbol, "fee must be system token");
     eosio_assert(fee.amount >= _gstate.goc_proposal_fee_limit, "insufficient fee");
 
@@ -113,6 +116,7 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
         info.proposal_name = pname;
         info.proposal_content = pcontent;
         info.url = url;
+        info.hash = hash;
         info.create_time = time_now;
         info.vote_starttime = time_now + _gstate.goc_vote_start_time;
         info.bp_vote_starttime = time_now + _gstate.goc_vote_start_time + _gstate.goc_governance_vote_period;
@@ -134,13 +138,14 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     eosio::print("created propsal ID: ", new_id, "\n");
 }
 
-void system_contract::gocupprop(const account_name owner, uint64_t id, const std::string &pname, const std::string &pcontent, const std::string &url)
+void system_contract::gocupprop(const account_name owner, uint64_t id, const std::string &pname, const std::string &pcontent, const std::string &url,  const std::string &hash)
 {
     require_auth(owner);
 
     eosio_assert(pname.size() < 512, "name too long");
     eosio_assert(pcontent.size() < 1024, "content too long");
     eosio_assert(url.size() < 512, "url too long");
+    eosio_assert(hash.size() < 512, "hash too long");
 
     const auto &proposal_updating = _gocproposals.get(id, "proposal not exist");
 
@@ -151,6 +156,7 @@ void system_contract::gocupprop(const account_name owner, uint64_t id, const std
         info.proposal_name = pname;
         info.proposal_content = pcontent;
         info.url = url;
+        info.hash = hash;
     });
 }
 

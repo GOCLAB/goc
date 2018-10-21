@@ -138,6 +138,7 @@ namespace eosiosystem {
       std::string           proposal_name;
       std::string           proposal_content;
       std::string           url;
+      std::string           hash;
 
       time                  create_time;
       time                  vote_starttime;
@@ -160,7 +161,7 @@ namespace eosiosystem {
       //need change to bp count
       bool      bp_pass()const         { return bp_nays < -7.0;  }
 
-      EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)
+      EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)(hash)
                             (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)
                             (settle_time)(reward)
                             (total_yeas)(total_nays)(total_voter)
@@ -281,8 +282,8 @@ namespace eosiosystem {
          void gocstake( account_name payer);
          void gocunstake( account_name receiver);
         // start_type: 0:normal, 1:skip waiting, 2:skip user vote, only for debug
-         void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, uint16_t start_type);
-         void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url );
+         void gocnewprop( const account_name owner, asset fee, const std::string& pname, const std::string& pcontent, const std::string& url, const std::string& hash, uint16_t start_type);
+         void gocupprop( const account_name owner, uint64_t id, const std::string& pname, const std::string& pcontent, const std::string& url, const std::string& hash);
          void gocsetpstage(const account_name owner, uint64_t id, uint16_t stage, time start_time);
 
          void gocvote( account_name voter, uint64_t id, bool yea );
