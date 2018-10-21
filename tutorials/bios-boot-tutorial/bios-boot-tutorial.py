@@ -212,7 +212,7 @@ def createGocStakedAccounts(b, e):
 def createGocProposals(b, e):
     for i in range(b, e):
         a = accounts[i]
-        run(args.cleos + 'system createproposal %s "%s" a%s b%s c%s --start-type %s' % (a['name'], intToCurrency(10000000), i, i, i, i%3))
+        run(args.cleos + 'system createproposal %s "%s" a%s b%s c%s d%s --start-type %s' % (a['name'], intToCurrency(10000000), i, i, i, i, i%3))
 
 def createGocVotes(b):
     for i in range(0, b):
