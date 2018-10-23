@@ -1,10 +1,5 @@
-* appbase命名空间下，application是cleos/keosd等的运行上下文示例，即插件管理器，plugin继承自abstract_plugin，是所有插件的基类。
-    * 插件的生命周期
-        * 注册(register_plugin)
-        * 配置(set_program_options)
-        * 初始化(plugin_initialize)
-        * 启动(plugin_startup)
-        * 关闭(plugin_shutdown)
+* plugin生命周期请参考 [faq.md](../../faq.md)
+
 * http_plugin注册(register_plugin)之后，使用方法如下(以keosd为例):
  ```cpp
     auto& http = app().get_plugin<http_plugin>();
