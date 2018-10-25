@@ -403,6 +403,7 @@
         {"name":"proposal_name",        "type":"string"},
         {"name":"proposal_content",     "type":"string"},
         {"name":"url",                  "type":"string"},
+        {"name":"hash",                 "type":"string"},
         {"name":"create_time",          "type":"time_point_sec"},
         {"name":"vote_starttime",       "type":"time_point_sec"},
         {"name":"bp_vote_starttime",    "type":"time_point_sec"},
