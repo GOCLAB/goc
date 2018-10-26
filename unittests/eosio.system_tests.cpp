@@ -2655,4 +2655,184 @@ BOOST_FIXTURE_TEST_CASE( goc_stake_unstake, eosio_system_tester ) try {
 
 } FC_LOG_AND_RETHROW()
 
+BOOST_FIXTURE_TEST_CASE( goc_new_update_prop, eosio_system_tester) try {
+
+   issue( "alice1111111", core_from_string("1000.0000"),  config::system_account_name );
+   issue( "bob111111111", core_from_string("1000.0000"),  config::system_account_name );
+
+   // create proposal 0
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_1", "pcontent_1", "url_1", "hash_1", 1 ) );
+
+   auto prop = get_proposal_info( (uint64_t) 0 );
+   BOOST_REQUIRE_EQUAL( "alice1111111", prop["owner"].as_string() );
+   BOOST_REQUIRE_EQUAL( "pname_1", prop["proposal_name"].as_string() );
+   BOOST_REQUIRE_EQUAL( "url_1", prop["url"].as_string() );
+   BOOST_REQUIRE_EQUAL( core_from_string("1000.0000"), prop["fee"].as<asset>() );
+   BOOST_REQUIRE_EQUAL( "pcontent_1", prop["proposal_content"].as_string() );
+
+   // create proposal 1
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "bob111111111", core_from_string("1000.0000"), "pname_2", "pcontent_2", "url_2", "hash_2", 0 ) );
+
+   prop = get_proposal_info( (uint64_t) 1 );
+   BOOST_REQUIRE_EQUAL( "bob111111111", prop["owner"].as_string() );
+   BOOST_REQUIRE_EQUAL( "pname_2", prop["proposal_name"].as_string() );
+   BOOST_REQUIRE_EQUAL( "url_2", prop["url"].as_string() );
+   BOOST_REQUIRE_EQUAL( core_from_string("1000.0000"), prop["fee"].as<asset>() );
+   BOOST_REQUIRE_EQUAL( "pcontent_2", prop["proposal_content"].as_string() );
+
+   // update proposal 1
+   BOOST_REQUIRE_EQUAL( success(), goc_update_prop( "bob111111111", 1, "pname_3", "pcontent_3", "url_3", "hash_3" ) );
+
+   prop = get_proposal_info( (uint64_t) 1 );
+   BOOST_REQUIRE_EQUAL( "bob111111111", prop["owner"].as_string() );
+   BOOST_REQUIRE_EQUAL( "pname_3", prop["proposal_name"].as_string() );
+   BOOST_REQUIRE_EQUAL( "url_3", prop["url"].as_string() );
+   BOOST_REQUIRE_EQUAL( core_from_string("1000.0000"), prop["fee"].as<asset>() );
+   BOOST_REQUIRE_EQUAL( "pcontent_3", prop["proposal_content"].as_string() );
+
+   // Error Case: proposal not exist
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal not exist"), goc_update_prop( "bob111111111", 100, "pname", "pcontent", "url", "hash" ) );
+
+   // Error Case: no balance object found
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("no balance object found"), 
+                        goc_new_prop( "carol1111111", core_from_string("1000.0000"), "pname", "pcontent", "url", "hash", 1 ) );
+
+   issue( "carol1111111", core_from_string("1000.0000"),  config::system_account_name );
+   // create proposal 2
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "carol1111111", core_from_string("1000.0000"), "pname_4", "pcontent_4", "url_4", "hash_4", 1 ) );
+
+   // Error Case: this proposal can not update because its start_type = 1
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal is not available for modify"), goc_update_prop( "carol1111111", 2, "pname", "pcontent", "url", "hash" ) );
+
+   issue( "carol1111111", core_from_string("1000.0000"),  config::system_account_name );
+   // create proposal 3
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "carol1111111", core_from_string("1000.0000"), "pname_5", "pcontent_5", "url_5", "hash_5", 0 ) );
+
+   // Error Case: this proposal can not update because its start_type = 0 after 3 days
+   produce_block( fc::days(3) );
+   produce_blocks( 1 );
+
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal is not available for modify"), goc_update_prop( "carol1111111", 3, "pname", "pcontent", "url", "hash" ) );
+
+} FC_LOG_AND_RETHROW()
+
+BOOST_FIXTURE_TEST_CASE( goc_vote_test, eosio_system_tester ) try {
+   
+   produce_blocks( 1 );
+
+   issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
+
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_0", "pcontent_0", "url_0", "hash_0", 0 ) ); //pid = 0;
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_1", "pcontent_1", "url_1", "hash_1", 1 ) ); //pid = 1;
+
+   issue( "bob111111111", core_from_string("200000.0000"),  config::system_account_name );
+   issue( "carol1111111", core_from_string("200000.0000"),  config::system_account_name );
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("bob111111111") );
+
+
+   //Error Case: vote a proposal that not exist
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal not exist"), goc_vote("bob111111111", 5, true) );
+   //Error Case: vote not yet start due to start_type = 0
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal voting not yet started"), goc_vote("bob111111111", 0, true) );
+   //Error Case: carol1111111 not yet stake for vote
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("insufficient stake for voting"), goc_vote("carol1111111", 1, true) );
+
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("carol1111111") );
+
+   //system voteproposal  carol1111111 1 1
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("carol1111111", 1, true) );
+   auto prop = get_proposal_info( (uint64_t) 1 );
+   BOOST_REQUIRE_EQUAL( 1.0, prop["total_yeas"].as_double() );
+   BOOST_REQUIRE_EQUAL( 0.0, prop["total_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1,   prop["total_voter"].as_uint64() );
+   auto votes = get_votes_info( (uint64_t)1, "carol1111111" );
+   BOOST_TEST_REQUIRE( true == votes["vote"] );
+
+   //system voteproposal  carol1111111 1 0
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("carol1111111", 1, false) );
+   prop = get_proposal_info( (uint64_t) 1 );
+   BOOST_REQUIRE_EQUAL( 0.0, prop["total_yeas"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1.0, prop["total_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1,   prop["total_voter"].as_uint64() );
+   votes = get_votes_info( (uint64_t)1, "carol1111111" );
+   BOOST_TEST_REQUIRE( false == votes["vote"] );
+
+   //system voteproposal  bob111111111 1 1
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 1, true) );
+   prop = get_proposal_info( (uint64_t) 1 );
+   BOOST_REQUIRE_EQUAL( 1.0, prop["total_yeas"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1.0, prop["total_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 2,   prop["total_voter"].as_uint64() );
+   votes = get_votes_info( (uint64_t)1, "bob111111111" );
+   BOOST_TEST_REQUIRE( true == votes["vote"] );
+
+
+   //after 3 days
+   produce_block( fc::days(3) );
+   produce_blocks( 1 );
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 0, true) );
+
+   produce_block( fc::days(7) );
+   produce_blocks( 1 );
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal voting expired"), goc_vote("bob111111111", 0, true) );
+
+   produce_blocks( 1 );
+
+} FC_LOG_AND_RETHROW()
+
+BOOST_FIXTURE_TEST_CASE( goc_bp_vote_test, eosio_system_tester ) try {
+   
+   produce_blocks( 1 );
+
+   create_accounts_with_resources( {  N(defproducer1), N(defproducer2) } );
+   BOOST_REQUIRE_EQUAL( success(), regproducer( "defproducer1", 1) );
+   BOOST_REQUIRE_EQUAL( success(), regproducer( "defproducer2", 2) );
+
+   issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
+
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_0", "pcontent_0", "url_0", "hash_0", 0 ) ); //pid = 0;
+
+
+
+   //Error Case: vote a proposal that not exist
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal not exist"), goc_bpvote("defproducer1", 5, true) );
+   //Error Case: vote not yet start due to start_type = 0
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal bp voting not yet started"), goc_bpvote("defproducer1", 0, true) );
+
+   produce_block( fc::days( 3 + 7 ) );
+   produce_blocks( 1 );
+
+   //system voteproposal --bpvote  defproducer1 0 1
+   BOOST_REQUIRE_EQUAL( success(), goc_bpvote("defproducer1", 0, true) );
+   auto prop = get_proposal_info( (uint64_t) 0 );
+   BOOST_REQUIRE_EQUAL( (double)(-1.0), prop["bp_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1,   prop["total_bp"].as_uint64() );
+   auto votes = get_bpvotes_info( (uint64_t)0, "defproducer1" );
+   BOOST_TEST_REQUIRE( true == votes["vote"] );
+
+   //system voteproposal --bpvote  defproducer1 0 0
+   BOOST_REQUIRE_EQUAL( success(), goc_bpvote("defproducer1", 0, false) );
+   prop = get_proposal_info( (uint64_t) 0 );
+   BOOST_REQUIRE_EQUAL( (double)(1.0), prop["bp_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 1,   prop["total_bp"].as_uint64() );
+   votes = get_bpvotes_info( (uint64_t)0, "defproducer1" );
+   BOOST_TEST_REQUIRE( false == votes["vote"] );
+
+   //system voteproposal --bpvote  defproducer2 0 0
+   BOOST_REQUIRE_EQUAL( success(), goc_bpvote("defproducer2", 0, false) );
+   prop = get_proposal_info( (uint64_t) 0 );
+   BOOST_REQUIRE_EQUAL( (double)(2.0), prop["bp_nays"].as_double() );
+   BOOST_REQUIRE_EQUAL( 2,   prop["total_bp"].as_uint64() );
+   votes = get_bpvotes_info( (uint64_t)0, "defproducer2" );
+   BOOST_TEST_REQUIRE( false == votes["vote"] );
+
+   produce_block( fc::days( 3 + 7 ) );
+   produce_blocks( 1 );
+
+   BOOST_REQUIRE_EQUAL( wasm_assert_msg("proposal bp voting expired"), goc_bpvote("defproducer1", 0, true) );
+   
+   produce_blocks( 1 );
+
+} FC_LOG_AND_RETHROW()
+
 BOOST_AUTO_TEST_SUITE_END()

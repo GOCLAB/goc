@@ -291,6 +291,61 @@ public:
          return push_action( name(receiver), N(gocunstake), mvo()("receiver",receiver));
    }
 
+   action_result goc_new_prop( const account_name& creater, 
+                               const asset&        fee, 
+                               const string&       pname,
+                               const string&       pcontent,
+                               const string&       url,
+                               const string&       hash,
+                               const uint64_t      start_type ) {
+      return push_action( name(creater), N(gocnewprop), mvo()
+                                               ("owner",  creater)
+                                               ("fee", fee )
+                                               ("pname", pname)
+                                               ("pcontent", pcontent )
+                                               ("url", url )
+                                               ("hash", hash )
+                                               ("start_type", start_type )
+                        );
+   }
+
+   action_result goc_update_prop( const account_name& owner,
+                               const uint64_t      id,
+                               const string&       pname,
+                               const string&       pcontent,
+                               const string&       url,
+                               const string&       hash ) {
+      return push_action( name(owner), N(gocupprop), mvo()
+                                               ("owner",  owner)
+                                               ("id", id)
+                                               ("pname", pname)
+                                               ("pcontent", pcontent )
+                                               ("url", url )
+                                               ("hash", hash )
+                        );
+   }
+
+   action_result goc_vote( const account_name& owner,
+                           const uint64_t      id,
+                           const bool          vote) {
+      return push_action( name(owner), N(gocvote), mvo()
+                                               ("owner", owner)
+                                               ("id", id)
+                                               ("vote", vote)
+                        );
+   }
+
+   action_result goc_bpvote( const account_name& owner,
+                           const uint64_t      id,
+                           const bool          vote) {
+      return push_action( name(owner), N(gocbpvote), mvo()
+                                               ("owner", owner)
+                                               ("id", id)
+                                               ("vote", vote)
+                        );
+   }
+
+
    static fc::variant_object producer_parameters_example( int n ) {
       return mutable_variant_object()
          ("max_block_net_usage", 10000000 + n )
@@ -354,6 +409,21 @@ public:
    fc::variant get_producer_info( const account_name& act ) {
       vector<char> data = get_row_by_account( config::system_account_name, config::system_account_name, N(producers), act );
       return abi_ser.binary_to_variant( "producer_info", data, abi_serializer_max_time );
+   }
+
+   fc::variant get_proposal_info( const uint64_t id ) {
+      vector<char> data = get_row_by_id( config::system_account_name, config::system_account_name, N(proposals), id );
+      return abi_ser.binary_to_variant( "goc_proposal_info", data, abi_serializer_max_time );
+   }
+
+   fc::variant get_votes_info(const uint64_t pid, const account_name& act ) {
+      vector<char> data = get_row_by_account( config::system_account_name, pid, N(votes), act );
+      return abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
+   }
+
+   fc::variant get_bpvotes_info(const uint64_t pid, const account_name& act ) {
+      vector<char> data = get_row_by_account( config::system_account_name, pid, N(bpvotes), act );
+      return abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
    }
 
    void create_currency( name contract, name manager, asset maxsupply ) {

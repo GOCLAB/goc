@@ -242,7 +242,7 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
     auto time_now = now();
 
     //User vote time, bp vote as normal user
-    eosio_assert(proposal_voting.vote_starttime < time_now, "proposal voting not yet started”");
+    eosio_assert(proposal_voting.vote_starttime < time_now, "proposal voting not yet started");
     eosio_assert(proposal_voting.bp_vote_starttime > time_now, "proposal voting expired");
 
     //User need stake for vote
