@@ -1288,6 +1288,50 @@ read_only::get_producers_result read_only::get_producers( const read_only::get_p
    return result;
 }
 
+read_only::get_proposals_result read_only::get_proposals( const read_only::get_proposals_params& p ) const {
+   const abi_def abi = eosio::chain_apis::get_abi(db, config::system_account_name);
+   const auto table_type = get_table_type(abi, N(proposals));
+   const abi_serializer abis{ abi, abi_serializer_max_time };
+   EOS_ASSERT(table_type == KEYi64, chain::contract_table_query_exception, "Invalid table type ${type} for table proposals", ("type",table_type));
+
+   const auto& d = db.db();
+   const auto* const table_id = d.find<chain::table_id_object, chain::by_code_scope_table>(
+           boost::make_tuple(config::system_account_name, config::system_account_name, N(proposals)));
+   EOS_ASSERT(table_id, chain::contract_table_query_exception, "Missing proposals table");
+   const auto& kv_index = d.get_index<key_value_index, by_scope_primary>();
+
+   read_only::get_proposals_result result;
+   const auto stopTime = fc::time_point::now() + fc::microseconds(1000 * 10); // 10ms
+   vector<char> data;
+   auto it = [&]{
+         return kv_index.lower_bound(
+            boost::make_tuple(table_id->id, 0));
+   }();
+
+   if(p.from > p.to) {
+      result.more = "from must small to";
+      return result;
+   }
+
+   uint32_t tmp_index = 0;
+   for( ; it != kv_index.end() && it->t_id == table_id->id; ++it, ++tmp_index ) {
+      if(tmp_index < p.from || tmp_index > p.to) {
+         continue;
+      }
+      if (result.rows.size() >= p.limit || fc::time_point::now() > stopTime) {
+         result.more = "next id:" + to_string(tmp_index);
+         break;
+      }
+      copy_inline_row(*kv_index.find(boost::make_tuple(table_id->id, it->primary_key)), data);
+      if (p.json)
+         result.rows.emplace_back(abis.binary_to_variant(abis.get_table_type(N(proposals)), data, abi_serializer_max_time));
+      else
+         result.rows.emplace_back(fc::variant(data));
+   }
+   
+   return result;
+}
+
 read_only::get_producer_schedule_result read_only::get_producer_schedule( const read_only::get_producer_schedule_params& p ) const {
    read_only::get_producer_schedule_result result;
    to_variant(db.active_producers(), result.active);

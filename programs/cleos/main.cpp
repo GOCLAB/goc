@@ -812,7 +812,7 @@ void ensure_keosd_running(CLI::App* app) {
     if (app->get_subcommand("create")->got_subcommand("key")) // create key does not require wallet
        return;
     if (auto* subapp = app->get_subcommand("system")) {
-       if (subapp->got_subcommand("listproducers") || subapp->got_subcommand("listbw") || subapp->got_subcommand("bidnameinfo")) // system list* do not require wallet
+       if (subapp->got_subcommand("listproducers") || subapp->got_subcommand("listproposals") || subapp->got_subcommand("listbw") || subapp->got_subcommand("bidnameinfo")) // system list* do not require wallet
          return;
     }
 
@@ -1149,6 +1149,48 @@ struct list_producers_subcommand {
                    row["total_votes"].as_double() / weight);
          if ( !result.more.empty() )
             std::cout << "-L " << result.more << " for more" << std::endl;
+      });
+   }
+};
+
+struct list_proposals_subcommand {
+   bool print_json = false;
+   uint32_t limit = 50;
+   uint32_t from = 0;
+   uint32_t to = 49;
+   std::string lower;
+
+   list_proposals_subcommand(CLI::App* actionRoot) {
+      auto list_proposals = actionRoot->add_subcommand("listproposals", localized("List proposals"));
+      list_proposals->add_flag("--json,-j", print_json, localized("Output in JSON format"));
+      list_proposals->add_option("-l,--limit", limit, localized("The maximum number of rows to return"));
+      list_proposals->add_option("-f,--from",  from,  localized("Return the begin rows of id"));
+      list_proposals->add_option("-t,--to",    to,    localized("Return the end rows of id"));
+      list_proposals->set_callback([this] {
+         auto rawResult = call(get_proposals_func, fc::mutable_variant_object
+            ("json", true)("from", from)("to", to)("limit", limit));
+         if ( print_json ) {
+            std::cout << fc::json::to_pretty_string(rawResult) << std::endl;
+            return;
+         }
+         auto result = rawResult.as<eosio::chain_apis::read_only::get_proposals_result>();
+         if ( result.rows.empty() ) {
+            std::cout << "No proposals found" << std::endl;
+            if ( !result.more.empty() )
+               std::cout << result.more  << std::endl;
+            return;
+         }
+         printf("%-4s %-13s %-57s %-59s %s\n", "ID", "Owner", "Proposal_name", "Url", "Hash");
+         for ( auto& row : result.rows )
+            printf("%-4.4s %-13.13s %-57.57s %-59.59s %-20.20s\n",
+                   row["id"].as_string().c_str(),
+                   row["owner"].as_string().c_str(),
+                   row["proposal_name"].as_string().c_str(),
+                   row["url"].as_string().c_str(),
+                   row["hash"].as_string().c_str() 
+                   );
+         if ( !result.more.empty() )
+            std::cout << result.more << std::endl;
       });
    }
 };
