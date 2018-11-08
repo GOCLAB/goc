@@ -58,7 +58,7 @@ fi
    }
 
    install_symlinks() {
-      printf "\\n\\tInstalling EOSIO Binary Symlinks\\n\\n"
+      printf "\\n\\tInstalling GOCIO Binary Symlinks\\n\\n"
       create_symlink "cleos"
       create_symlink "eosio-abigen"
       create_symlink "eosio-launcher"
@@ -88,7 +88,7 @@ fi
    
    if ! make install
    then
-      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> MAKE installing EOSIO has exited with the above error.\\n\\n"
+      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> MAKE installing GOCIO has exited with the above error.\\n\\n"
       exit -1
    fi
    popd &> /dev/null 
@@ -96,15 +96,22 @@ fi
    install_symlinks   
 
    printf "\n\n${bldred}\t _______  _______  _______ _________ _______\n"
-   printf '\t(  ____ \(  ___  )(  ____ \\\\__   __/(  ___  )\n'
-   printf "\t| (    \/| (   ) || (    \/   ) (   | (   ) |\n"
-   printf "\t| (__    | |   | || (_____    | |   | |   | |\n"
-   printf "\t|  __)   | |   | |(_____  )   | |   | |   | |\n"
-   printf "\t| (      | |   | |      ) |   | |   | |   | |\n"
-   printf "\t| (____/\| (___) |/\____) |___) (___| (___) |\n"
+   printf '\t(  ____ )(  ___  )(  ____ \\\\__   __/(  ___  )\n'
+   printf "\t| )    |/| (   ) || (    \/   ) (   | (   ) |\n"
+   printf "\t| )      | |   | || (         | |   | |   | |\n"
+   printf "\t| )  ___ | |   | || |         | |   | |   | |\n"
+   printf "\t| ) /__||| |   | || |         | |   | |   | |\n"
+   printf "\t| )____||| (___) || |___/\ ___) (___| (___) |\n"
    printf "\t(_______/(_______)\_______)\_______/(_______)\n${txtrst}"
+   
+   printf "\\tFor GOC informations:\\n"
+   printf "\\tGOCLAB.IO website: https://www.goclab.io\\n"
+   printf "\\tEmail Address: contact@GoClab.io\\n"
+   printf "\\tTwitter：@GOC_lab\\n"
+   printf "\\tTelegram：t.me/GOC_Lab\\n"
+   printf "\\tMedium：https://medium.com/goc-lab\\n\\n\\n"
 
-   printf "\\tFor more information:\\n"
+   printf "\\tGOC is based on EOS system, For more information about EOS:\\n"
    printf "\\tEOSIO website: https://eos.io\\n"
    printf "\\tEOSIO Telegram channel @ https://t.me/EOSProject\\n"
    printf "\\tEOSIO resources: https://eos.io/resources/\\n"

@@ -268,7 +268,7 @@
       -DENABLE_COVERAGE_TESTING="${ENABLE_COVERAGE_TESTING}" -DBUILD_DOXYGEN="${DOXYGEN}" \
       -DCMAKE_INSTALL_PREFIX="/usr/local/eosio" "${SOURCE_DIR}"
    then
-      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> CMAKE building EOSIO has exited with the above error.\\n\\n"
+      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> CMAKE building GOCIO has exited with the above error.\\n\\n"
       exit -1
    fi
 
@@ -280,7 +280,7 @@
    if [ -z ${JOBS} ]; then JOBS=$CPU_CORE; fi # Future proofing: Ensure $JOBS is set (usually set in scripts/eosio_build_*.sh scripts)
    if ! make -j"${JOBS}"
    then
-      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> MAKE building EOSIO has exited with the above error.\\n\\n"
+      printf "\\n\\t>>>>>>>>>>>>>>>>>>>> MAKE building GOCIO has exited with the above error.\\n\\n"
       exit -1
    fi
 
