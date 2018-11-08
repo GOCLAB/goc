@@ -411,6 +411,8 @@ namespace eosiosystem {
    void system_contract::refund( const account_name owner ) {
       require_auth( owner );
 
+      auto time_now = now();
+
       refunds_table refunds_tbl( _self, owner );
       auto req = refunds_tbl.find( owner );
       eosio_assert( req != refunds_tbl.end(), "refund request not found" );
