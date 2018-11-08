@@ -430,9 +430,17 @@ namespace eosiosystem {
 
       for(auto& reward : rewards)
       {
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
+            if(reward.settle_time == 0) {
+                  INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
                                                     { N(gocio.gns), owner, reward.rewards, std::string("reward for proposal") } );
-            rewards.erase(reward);
+
+                  rewards.modify(reward, 0 , [&](auto &info){
+                        info.settle_time = time_now;
+                  });                                  
+            }
+            
+            //keep reward info
+            //rewards.erase(reward);
       }
 
 

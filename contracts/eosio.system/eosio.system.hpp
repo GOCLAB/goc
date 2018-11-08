@@ -181,14 +181,16 @@ namespace eosiosystem {
      EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time)(settle_time))     
    };
 
+
    struct goc_reward_info {
       time          reward_time;
       uint64_t      proposal_id;
       eosio::asset  rewards = asset(0);
+      time          settle_time = 0;
 
       uint64_t  primary_key()const { return proposal_id; }
 
-      EOSLIB_SERIALIZE( goc_reward_info, (reward_time)(proposal_id)(rewards) )
+      EOSLIB_SERIALIZE( goc_reward_info, (reward_time)(proposal_id)(rewards)(settle_time) )
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;

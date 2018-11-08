@@ -431,7 +431,8 @@
       "fields": [
         {"name":"reward_time",          "type":"time_point_sec"},
         {"name":"proposal_id",          "type":"uint64"},
-        {"name":"rewards",              "type":"asset"}
+        {"name":"rewards",              "type":"asset"},
+        {"name":"settle_time",          "type":"time_point_sec"}
       ]
     },{
       "name": "claimrewards",
@@ -727,7 +728,7 @@
       "name": "gocrewards",
       "type": "goc_reward_info",
       "index_type": "i64",
-      "key_names" : ["owner"],
+      "key_names" : ["proposal_id"],
       "key_types" : ["uint64"]
     },{
        "name": "namebids",

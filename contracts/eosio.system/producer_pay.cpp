@@ -195,17 +195,16 @@ namespace eosiosystem {
                     // check all vote in votes info table
                     for(auto& vote : votes)
                     {
-                        //add reward to users pending reward table to avoid heavy load, they can use refund command to get them
+                        //update reward in user pending reward table to avoid heavy load, they can use refund command to get them
                         goc_rewards_table rewards(_self, vote.owner);
 
-                        rewards.emplace(_self, [&](auto &info){
+                        const auto &reward_updating = rewards.get(pid, "proposal not exist in user rewards record");
+
+                        rewards.modify(reward_updating, 0, [&](auto &info){
                             info.reward_time = time_now;
-                            info.proposal_id = pid;
                             //every one share proposal reward
                             info.rewards = asset(vote_reward_token);
                         });
-
-                        
 
                         votes.modify(vote, 0, [&](auto &vote_info){
                             vote_info.settle_time = time_now;

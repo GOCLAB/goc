@@ -314,6 +314,16 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
             info.total_voter += 1;
 
         });
+        //save voted info to user rewards
+        goc_rewards_table rewards(_self, voter);
+
+        rewards.emplace(_self, [&](auto &info){
+            info.reward_time = 0;
+            info.proposal_id = pid;
+            info.rewards = asset(0);
+            info.settle_time = 0;
+        });
+
         //freeze goc stake to bp vote end, no time end change check here, maybe need.
         if(res_itr->goc_stake_freeze < proposal_voting.bp_vote_starttime + _gstate.goc_bp_vote_period) {
             userres.modify(res_itr, voter, [&](auto &res) {
