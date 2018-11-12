@@ -150,9 +150,9 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
        'gocio.stake',		//管理GOC抵押的账户，抵押网络和CPU资源时会得到股权，GOC会转到这个帐号上，refund会从这个帐号转出
        'gocio.token',		//发行和管理gocio.token合约的账户
        'gocio.vpay',		//生产者投票付款账户，矿工按照获得投票多少比例获取奖励的临时代管账户，增发GOC的1%的75%会先转到这个账户
-       'gocio.gns',         //goc实现的功能：给bp投票的奖励
-       'gocio.gstake',      //goc实现的功能
-       'gocio.vs',          //goc实现的功能：投票奖励
+       'gocio.gns',         //GOC新增，用于保存GN奖励增发部分
+       'gocio.gstake',      //GOC新增，用于保存投票权限抵押部分，用户赎回时，从此账户取出费用
+       'gocio.vs',          //GOC新增，用于保存投票奖励增发部分
    ]
    ```
 
