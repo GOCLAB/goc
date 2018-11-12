@@ -453,7 +453,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
 16. (__'q'__, 'resign', steResign, True, "Resign gocio")
 
-    当用生产者继承出块后，系统用户将会注销掉(*gocio*,*gocio.bpay*...)
+    当用生产者继承出块后，系统用户(*gocio*,*gocio.bpay*...)将会进行权限转移：
 
     ```bash
     ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio updateauth '{"account": "gocio", "permission": "owner", "parent": "", "auth": {"threshold": 1, "keys": [], "waits": [], "accounts": [{"weight": 1, "permission": {"actor": "gocio.prods", "permission": "active"}}]}}' -p gocio@owner
