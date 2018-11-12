@@ -144,7 +144,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
        'gocio.bpay',		//生产者区块付款用户，矿工获取出块奖励的临时代管账户，增发GOC的1%的25%会先转到这个账户
        'gocio.msig',		//多重签名管理账户，特权账户
        'gocio.names',		//名字竞价拍卖管理的账户
-       'gocio.ram',		    //内存买卖管理的账户
+       'gocio.ram',	        //内存买卖管理的账户
        'gocio.ramfee',		//内存买卖收取手续费的账户，按照每笔交易5%的费率收取手续费
        'gocio.saving',		//增发GOC临时存放账户，增发总量5%，其中80%放在此账户，另外20%再分成25%和75%，分别给gocio.bpay和gocio.vpay
        'gocio.stake',		//管理GOC抵押的账户，抵押网络和CPU资源时会得到股权，GOC会转到这个帐号上，refund会从这个帐号转出
@@ -279,12 +279,12 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
    ![10-g-1](./avatar/bios-boot-tutorial_Pictures/10-g-1.png)
    **issue** 函数是用来增发代币，`gocio.token`合约并不是新建了代币就会得到代币，新建的代币只是存储了资料，发币者要想获取 代币，需要调用 issue 来获得代币。
    
-   ```c++
+    ```c++
    void issue( 
         account_name to, 		//代币的发行方为账户为gocio,之前已经创建
         asset quantity,  		//发行代币的数量为2000000个,代币名称为GOC
         string memo ); 			//表示备注说明，不能超过256个字节
-   ```
+    ```
 
   ```bash
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 transfer gocio useraaaaaaaa "200000.0000 GOC"
@@ -313,7 +313,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system createproposal producer111a "1000.0000 GOC" a8 b8 c8 d8 --start-type 2
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system createproposal producer111b "1000.0000 GOC" a9 b9 c9 d9 --start-type 0
   ```
-
+   创建提案
   ```bash
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system voteproposal useraaaaaaaf 8 0 
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system voteproposal useraaaaaaaa 1 0 
@@ -322,8 +322,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
   
   ...
   ```
-
-  ==TODO
+  提案投票
 
 11. (__'p'__, 'reg-prod', stepRegProducers, True, "Register producers")
 
