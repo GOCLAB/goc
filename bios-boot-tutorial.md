@@ -218,7 +218,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
 
 9. (__'T'__, 'stake', stepCreateStakedAccounts, True, "Create staked accounts")
 
-   为8个普通账户、3个生产者账户分配系统资源和货币。其中，普通账户为*useraaaaaaaa*~*useraaaaaaah*，生产者账户为*producer111a*~*producer111b*。
+   为8个普通账户、3个生产者账户分配系统资源和货币。其中，普通账户为*useraaaaaaaa*-*useraaaaaaah*，生产者账户为*producer111a*-*producer111b*。
 
    ```bash
    ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 system newaccount --transfer gocio useraaaaaaaa GOC69X3383RzBZj41k73CSjUNXM5MYGpnDxyPnWUKPEtYQmTBWz4D --stake-net "296862112.3188 GOC" --stake-cpu "296862112.3187 GOC" --buy-ram "0.2000 GOC"   
@@ -268,6 +268,9 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
    ```
 
 10. (__'g'__, 'goc', stepGOC, True, "Prepare goc data")
+
+   GOC的相关功能
+   
    ```bash
    ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token issue '["gocio", "2000000.0000 GOC", "proposal"]' -p gocio
    ```
