@@ -113,7 +113,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
    ../../build/programs/nodeos/nodeos    --max-irreversible-block-age -1    --contracts-console    --genesis-json /Users/USERNAME/GOCint/tutorials/bios-boot-tutorial/genesis.json    --blocks-dir /Users/USERNAME/GOCint/tutorials/bios-boot-tutorial/nodes/00-gocio/blocks    --config-dir /Users/USERNAME/GOCint/tutorials/bios-boot-tutorial/nodes/00-gocio    --data-dir /Users/USERNAME/GOCint/tutorials/bios-boot-tutorial/nodes/00-gocio    --chain-state-db-size-mb 128    --chain-state-db-guard-size-mb 16    --reversible-blocks-db-size-mb 32    --reversible-blocks-db-guard-size-mb 2    --http-server-address 0.0.0.0:8000    --p2p-listen-endpoint 0.0.0.0:9000    --max-clients 13    --p2p-max-nodes-per-host 13    --enable-stale-production    --max-transaction-time=1000    --producer-name gocio    --signature-provider=GOC8Znrtgwt8TfpmbVpTKvA2oB8Nqey625CLN8bCN3TEbgx86Dsvr=KEY:5K463ynhZoCDDa4RDcr63cUwWLTnKqmdcoTKTHBjqoKfv4u5V7p    --verbose-http-errors    --plugin eosio::http_plugin    --plugin eosio::chain_api_plugin    --plugin eosio::producer_plugin    --plugin eosio::history_plugin    --plugin eosio::history_api_plugin    2>>./nodes/00-gocio/stderr
    ```
 
-   启动第一个节点，创世块生产d者，也就是gocio账号的拥有者，运行gocio的nodeos进程。
+   启动第一个节点，创世块生产者，也就是gocio账号的拥有者，运行gocio的nodeos进程。
 
 5. (__'s'__, 'sys', createSystemAccounts, True, "Create system accounts (gocio.*)")
 
