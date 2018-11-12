@@ -268,23 +268,19 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
    ```
 
 10. (__'g'__, 'goc', stepGOC, True, "Prepare goc data")
-
-  ```bash
-  ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token issue '["gocio", "2000000.0000 GOC", "proposal"]' -p gocio
-  ```
-
-  发行代币，命令运行如下：
-
-  ![10-g-1](./avatar/bios-boot-tutorial_Pictures/10-g-1.png)
-
-  **issue** 函数是用来增发代币，`gocio.token`合约并不是新建了代币就会得到代币，新建的代币只是存储了资料，发币者要想获取 代币，需要调用 issue 来获得代币。
-
-  ```c++
-  void issue( 
-  	account_name to, 		//代币的发行方为账户为gocio,之前已经创建
-  	asset quantity,  		//发行代币的数量为2000000个,代币名称为GOC
-  	string memo ); 			//表示备注说明，不能超过256个字节
-  ```
+   ```bash
+   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token issue '["gocio", "2000000.0000 GOC", "proposal"]' -p gocio
+   ```
+   发行代币，命令运行如下：
+   ![10-g-1](./avatar/bios-boot-tutorial_Pictures/10-g-1.png)
+   **issue** 函数是用来增发代币，`gocio.token`合约并不是新建了代币就会得到代币，新建的代币只是存储了资料，发币者要想获取 代币，需要调用 issue 来获得代币。
+   
+   ```c++
+   void issue( 
+        account_name to, 		//代币的发行方为账户为gocio,之前已经创建
+        asset quantity,  		//发行代币的数量为2000000个,代币名称为GOC
+        string memo ); 			//表示备注说明，不能超过256个字节
+   ```
 
   ```bash
   ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 transfer gocio useraaaaaaaa "200000.0000 GOC"
