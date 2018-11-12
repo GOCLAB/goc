@@ -274,6 +274,7 @@ parser.add_argument('-H', '--http-port', type=int, default=8000, metavar='', hel
    ```bash
    ../../build/programs/cleos/cleos --wallet-url http://127.0.0.1:6666 --url http://127.0.0.1:8000 push action gocio.token issue '["gocio", "2000000.0000 GOC", "proposal"]' -p gocio
    ```
+   
    发行代币，命令运行如下：
    ![10-g-1](./avatar/bios-boot-tutorial_Pictures/10-g-1.png)
    **issue** 函数是用来增发代币，`gocio.token`合约并不是新建了代币就会得到代币，新建的代币只是存储了资料，发币者要想获取 代币，需要调用 issue 来获得代币。
