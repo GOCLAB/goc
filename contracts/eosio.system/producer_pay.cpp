@@ -138,6 +138,49 @@ namespace eosiosystem {
          _gstate.last_pervote_bucket_fill = ct;
       }
 
+      //GOC cal vote rewards every 24H
+      if (time_now >= _gstate.last_voter_bucket_empty + seconds_per_day) {
+
+          int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_gn_bucket / _gstate.total_stake);
+
+          // count all voters
+          for(auto& voter : _voters) {
+             account_name reward_to;
+             int64_t reward_stake;
+
+             if(voter.staked > 0 || voter.proxied_vote_stake >0) {
+                //proxy will take all proxied stake reward and its own stake reward
+                if(voter.proxy) {
+                   reward_to = 0;
+                   reward_stake = 0;
+                } else {
+                   reward_to = voter.owner;
+                   if(voter.is_proxy)
+                     reward_stake = voter.staked + voter.proxied_vote_stake;
+                   else
+                     reward_stake = voter.staked;
+                }
+               
+               
+
+               if(reward_stake > 0) {
+                  goc_vote_rewards_table vrewards(_self, reward_to);
+
+                  vrewards.emplace(reward_to, [&](auto &info){
+                        info.reward_time = time_now;
+                        info.rewards = asset(per_stake_reward * reward_stake);
+                  });
+               }
+             }
+          }
+
+
+          //empty the voter bucket every time, left token saved in vs account
+          _gstate.goc_voter_bucket = 0;
+          //reset voter bucket empty time
+          _gstate.last_voter_bucket_empty = time_now;
+      }
+
       // GOC cal gn rewards on prod's claimreward action, every 24H * 7 once 
       if(time_now >= _gstate.last_gn_bucket_empty + seconds_per_day * 7) {
 

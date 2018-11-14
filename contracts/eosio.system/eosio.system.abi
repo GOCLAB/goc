@@ -390,7 +390,9 @@
         {"name":"producers",            "type":"account_name[]"},
         {"name":"staked",               "type":"int64"},
         {"name":"last_vote_weight",     "type":"float64"},
+        {"name":"last_vote_stake",      "type":"int64"},
         {"name":"proxied_vote_weight",  "type":"float64"},
+        {"name":"proxied_vote_stake",   "type":"int64"},
         {"name":"is_proxy",             "type":"bool"}
       ]
     },{
@@ -424,6 +426,13 @@
         {"name":"vote",                 "type":"bool"},
         {"name":"vote_time",            "type":"time_point_sec"},
         {"name":"vote_update_time",     "type":"time_point_sec"}
+      ]
+    },{
+      "name": "goc_vote_reward_info",
+      "base": "",
+      "fields": [
+        {"name":"reward_time",          "type":"time_point_sec"},
+        {"name":"rewards",              "type":"asset"},
       ]
     },{
       "name": "goc_reward_info",
@@ -729,6 +738,12 @@
       "type": "goc_reward_info",
       "index_type": "i64",
       "key_names" : ["proposal_id"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "gocvrewards",
+      "type": "goc_vote_reward_info",
+      "index_type": "i64",
+      "key_names" : ["reward_time"],
       "key_types" : ["uint64"]
     },{
        "name": "namebids",

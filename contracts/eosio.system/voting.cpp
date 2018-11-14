@@ -157,18 +157,29 @@ namespace eosiosystem {
          }
       }
 
+      //Here GOC will calculate voter stake for reward, everyone's stake is saved in staked field, and update proxy's proxied_vote_stake.
+      //system total will changed if stake changed.
+      int64_t new_vote_stake = voter->staked;
+      //record total stake change
+      int64_t stake_delta = new_vote_stake - voter->last_vote_stake;
+      _gstate.total_stake += stake_delta;
+      
       auto new_vote_weight = stake2vote( voter->staked );
       if( voter->is_proxy ) {
          new_vote_weight += voter->proxied_vote_weight;
       }
 
       boost::container::flat_map<account_name, pair<double, bool /*new*/> > producer_deltas;
+
+      //if voter has voted, remove old proxy's proxied weight and stake;
+      //since stake=0 means weight=0, only one condition is enough
       if ( voter->last_vote_weight > 0 ) {
          if( voter->proxy ) {
             auto old_proxy = _voters.find( voter->proxy );
             eosio_assert( old_proxy != _voters.end(), "old proxy not found" ); //data corruption
             _voters.modify( old_proxy, 0, [&]( auto& vp ) {
                   vp.proxied_vote_weight -= voter->last_vote_weight;
+                  vp.proxied_vote_stake -= voter->last_vote_stake;
                });
             propagate_weight_change( *old_proxy );
          } else {
@@ -180,6 +191,8 @@ namespace eosiosystem {
          }
       }
 
+      // if vote proxied, add weight and stake to new proxy
+      // remove old, set new.
       if( proxy ) {
          auto new_proxy = _voters.find( proxy );
          eosio_assert( new_proxy != _voters.end(), "invalid proxy specified" ); //if ( !voting ) { data corruption } else { wrong vote }
@@ -187,6 +200,7 @@ namespace eosiosystem {
          if ( new_vote_weight >= 0 ) {
             _voters.modify( new_proxy, 0, [&]( auto& vp ) {
                   vp.proxied_vote_weight += new_vote_weight;
+                  vp.proxied_vote_stake += new_vote_stake;
                });
             propagate_weight_change( *new_proxy );
          }
@@ -219,6 +233,7 @@ namespace eosiosystem {
 
       _voters.modify( voter, 0, [&]( auto& av ) {
          av.last_vote_weight = new_vote_weight;
+         av.last_vote_stake = new_vote_stake;
          av.producers = producers;
          av.proxy     = proxy;
       });

@@ -65,7 +65,8 @@ namespace eosiosystem {
       int64_t              goc_voter_bucket = 0;
       int64_t              goc_gn_bucket = 0;
       uint32_t             last_gn_bucket_empty = 0;
-      
+      uint32_t             last_voter_bucket_empty = 0;
+      int64_t              total_stake = 0;
 
 
 
@@ -77,7 +78,7 @@ namespace eosiosystem {
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
                                 (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)
                                 (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
-                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty) )
+                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
    };
 
    struct producer_info {
@@ -113,12 +114,14 @@ namespace eosiosystem {
        *  stated.amount * 2 ^ ( weeks_since_launch/weeks_per_year)
        */
       double                      last_vote_weight = 0; /// the vote weight cast the last time the vote was updated
+      int64_t                    last_vote_stake = 0;
 
       /**
        * Total vote weight delegated to this voter.
        */
       double                      proxied_vote_weight= 0; /// the total vote weight delegated to this voter as a proxy
       bool                        is_proxy = 0; /// whether the voter is a proxy for others
+      int64_t                     proxied_vote_stake = 0; /// the total stake delegated to this voter as a proxy
 
 
       uint32_t                    reserved1 = 0;
@@ -128,7 +131,7 @@ namespace eosiosystem {
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
+      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(last_vote_stake)(proxied_vote_weight)(proxied_vote_stake)(is_proxy)(reserved1)(reserved2)(reserved3) )
    };
 
    struct goc_proposal_info {
@@ -181,6 +184,14 @@ namespace eosiosystem {
      EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time)(settle_time))     
    };
 
+   struct goc_vote_reward_info {
+      time          reward_time;
+      eosio::asset  rewards = asset(0);
+
+      uint64_t primary_key() const { return reward_time;}
+
+      EOSLIB_SERIALIZE( goc_vote_reward_info, (reward_time)(rewards) ) 
+   };
 
    struct goc_reward_info {
       time          reward_time;
@@ -195,8 +206,6 @@ namespace eosiosystem {
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
 
-
-
    typedef eosio::multi_index< N(producers), producer_info,
                                indexed_by<N(prototalvote), const_mem_fun<producer_info, double, &producer_info::by_votes>  >
                                >  producers_table;
@@ -210,6 +219,8 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
    typedef eosio::multi_index< N(gocrewards), goc_reward_info>      goc_rewards_table;
+   typedef eosio::multi_index< N(gocvrewards), goc_vote_reward_info>      goc_vote_rewards_table;
+
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 

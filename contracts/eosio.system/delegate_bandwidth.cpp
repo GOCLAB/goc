@@ -271,7 +271,8 @@ namespace eosiosystem {
 
          set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
 
-         if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 ) {
+         // only all resource object is 0, EOS & GOC
+         if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 && tot_itr->governance_stake == asset(0)) {
             totals_tbl.erase( tot_itr );
          }
       } // tot_itr can be invalid, should go out of scope
@@ -412,7 +413,34 @@ namespace eosiosystem {
       require_auth( owner );
 
       auto time_now = now();
+      goc_vote_rewards_table vrewards(_self, owner);
+      for(auto& reward : vrewards) {
+          INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
+                                                    { N(gocio.vs), owner, reward.rewards, std::string("Reward for BP Vote") } );
+          vrewards.erase(reward);   
+      }
 
+      // GOC use this part for sending voting rewards
+      // GOC use this part for sending GN rewards
+      
+      goc_rewards_table rewards(_self, owner);
+
+      for(auto& reward : rewards)
+      {
+            if(reward.settle_time == 0) {
+                  //  take GOC from gocio.gns account
+                  INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
+                                                    { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
+
+                  rewards.modify(reward, 0 , [&](auto &info){
+                        info.settle_time = time_now;
+                  });                                  
+            }
+            //keep reward info
+            //rewards.erase(reward);
+      }
+
+      // EOS refund for stake
       refunds_table refunds_tbl( _self, owner );
       auto req = refunds_tbl.find( owner );
       eosio_assert( req != refunds_tbl.end(), "refund request not found" );
@@ -425,26 +453,6 @@ namespace eosiosystem {
                                                     { N(gocio.stake), req->owner, req->net_amount + req->cpu_amount, std::string("unstake") } );
 
       refunds_tbl.erase( req );
-
-      // GOC use this action to send rewards
-
-      goc_rewards_table rewards(_self, owner);
-
-      for(auto& reward : rewards)
-      {
-            if(reward.settle_time == 0) {
-                  INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
-                                                    { N(gocio.gns), owner, reward.rewards, std::string("reward for proposal") } );
-
-                  rewards.modify(reward, 0 , [&](auto &info){
-                        info.settle_time = time_now;
-                  });                                  
-            }
-            
-            //keep reward info
-            //rewards.erase(reward);
-      }
-
 
    }
 } //namespace eosiosystem
