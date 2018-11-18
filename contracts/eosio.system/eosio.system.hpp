@@ -276,6 +276,24 @@ namespace eosiosystem {
          void undelegatebw( account_name from, account_name receiver,
                             asset unstake_net_quantity, asset unstake_cpu_quantity );
 
+         /**
+          *  GOC will reward voter who delegate and lock for long time.
+          *  all stake is counted in vote weight, reward calculated every day (with declared time ratio) but only settled when finished.
+          *  lock for others will increase receiver's stake and reward.
+          *  lock method need at least 10K GOC.
+          *  use lock_type to set lock time, 0 for normal (same as delefatebw, no lock), others will auto refund when time finished.
+          *  if you unlock with force flag, ratio is 1.
+          *  here is the reward calculate table.
+          *  time    ratio    lock_type         auto refund       force refund ratio
+          *  normal  1        use delegatebw    use undelegatebw  N/A
+          *  7days   1.25     1                 Y                 1
+          *  30days  1.5      2                 Y                 1
+          *  60days  2        3                 Y                 1
+          *  90days  1.5      4                 Y                 1
+          */
+         void lockbw( account_name from, account_name receiver,
+                          asset stake_net_quantity, asset stake_cpu_quantity, bool transfer, uint8_t lock_type );
+         void unlockbw( account_name from, account_name receiver, uint32_t lock_id, bool force_end );
 
          /**
           * Increases receiver's ram quota based upon current price and quantity of
@@ -311,6 +329,8 @@ namespace eosiosystem {
           *  unstaked tokens belonging to owner
           */
          void refund( account_name owner );
+
+         void gocreward( account_name owner );
 
          // functions defined in voting.cpp
 

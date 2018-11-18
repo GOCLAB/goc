@@ -74,6 +74,24 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
    };
 
+   struct locked_bandwidth {
+      uint64_t       id;
+      account_name   from;
+      account_name   to;
+      uint8_t        lock_type;
+      time           lock_time;
+      eosio::asset   net_amount;
+      eosio::asset   cpu_amount;
+      eosio::asset   reward_bucket;
+      bool           voting;
+      uint32_t       active_days;
+
+      uint64_t  primary_key()const { return id; }
+
+      EOSLIB_SERIALIZE( locked_bandwidth, (id)(from)(to)(lock_type)(lock_time)(net_amount)(cpu_amount)(reward_bucket)(voting)(active_days) )
+
+   };
+
    /**
     *  These tables are designed to be constructed in the scope of the relevant user, this
     *  facilitates simpler API for per-user queries
@@ -81,6 +99,8 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
    typedef eosio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
    typedef eosio::multi_index< N(refunds), refund_request>      refunds_table;
+
+   typedef eosio::multi_index< N(lockband), locked_bandwidth>   locked_bandwidth_table;
 
 
 
@@ -408,8 +428,53 @@ namespace eosiosystem {
       changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
    } // undelegatebw
 
+   void system_contract::lockbw(account_name from, account_name receiver,
+                                     asset stake_net_quantity,
+                                     asset stake_cpu_quantity, bool transfer, uint8_t lock_type) 
+   {
+      eosio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
+      eosio_assert( stake_net_quantity >= asset(0), "must stake a positive amount" );
+      eosio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
+      eosio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
+      eosio_assert( lock_type > 0 && lock_type < 5, "invalid lock_type ");
 
-   void system_contract::refund( const account_name owner ) {
+      require_auth(from);
+
+      locked_bandwidth_table lockband(_self, receiver);
+
+      auto idx = lockband.available_primary_key();
+
+      lockband.emplace( receiver, [&]( auto& lock ) { 
+         lock.id = idx;
+         lock.from = from;
+         lock.to = receiver;
+         lock.lock_type = lock_type;
+         lock.lock_time = now();
+         lock.net_amount = stake_net_quantity;
+         lock.cpu_amount = stake_cpu_quantity;
+         lock.reward_bucket = asset(0);
+         lock.voting = false;
+      });
+
+      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
+
+      
+   }
+
+   void system_contract::unlockbw( account_name from, account_name receiver, uint32_t lock_id, bool force_end ) {
+      
+      require_auth(from);
+
+      locked_bandwidth_table lockband(_self, receiver);
+
+      const auto &locked_bandwidth = lockband.get(lock_id, "locked delegate bandwidth not exist");
+
+      //if lock is time 
+
+
+   }
+
+   void system_contract::gocreward(const account_name owner ) {
       require_auth( owner );
 
       auto time_now = now();
@@ -427,18 +492,24 @@ namespace eosiosystem {
 
       for(auto& reward : rewards)
       {
-            if(reward.settle_time == 0) {
-                  //  take GOC from gocio.gns account
-                  INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
-                                                    { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
+         //reward_time = 0 means new voted reward, not available for settle.
+         if(reward.reward_time != 0 && reward.rewards != asset(0)) {
+               //  take GOC from gocio.gns account
+               INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
+                                                   { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
 
-                  rewards.modify(reward, 0 , [&](auto &info){
-                        info.settle_time = time_now;
-                  });                                  
-            }
-            //keep reward info
-            //rewards.erase(reward);
+               rewards.modify(reward, 0 , [&](auto &info){
+                     info.settle_time = time_now;
+               });                                  
+         }
+         //keep reward info
+         //rewards.erase(reward);
       }
+   }
+
+
+   void system_contract::refund( const account_name owner ) {
+      require_auth( owner );
 
       // EOS refund for stake
       refunds_table refunds_tbl( _self, owner );
