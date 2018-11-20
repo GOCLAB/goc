@@ -185,12 +185,13 @@ namespace eosiosystem {
    };
 
    struct goc_vote_reward_info {
+      uint64_t      reward_id = 0;
       time          reward_time;
-      eosio::asset  rewards = asset(0);
+      int64_t       rewards = 0;
 
-      uint64_t primary_key() const { return reward_time;}
+      uint64_t primary_key() const { return reward_id;}
 
-      EOSLIB_SERIALIZE( goc_vote_reward_info, (reward_time)(rewards) ) 
+      EOSLIB_SERIALIZE( goc_vote_reward_info, (reward_id)(reward_time)(rewards) ) 
    };
 
    struct goc_reward_info {

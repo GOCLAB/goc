@@ -431,8 +431,9 @@
       "name": "goc_vote_reward_info",
       "base": "",
       "fields": [
+        {"name":"reward_id",            "type":"uint64"},
         {"name":"reward_time",          "type":"time_point_sec"},
-        {"name":"rewards",              "type":"asset"},
+        {"name":"rewards",              "type":"int64"}
       ]
     },{
       "name": "goc_reward_info",
@@ -647,6 +648,10 @@
       "type": "voteproducer",
       "ricardian_contract": ""
    },{
+      "name": "gocreward",
+      "type": "gocreward",
+      "ricardian_contract": ""
+   },{
       "name": "claimrewards",
       "type": "claimrewards",
       "ricardian_contract": ""
@@ -749,7 +754,7 @@
       "name": "gocvrewards",
       "type": "goc_vote_reward_info",
       "index_type": "i64",
-      "key_names" : ["reward_time"],
+      "key_names" : ["reward_id"],
       "key_types" : ["uint64"]
     },{
        "name": "namebids",

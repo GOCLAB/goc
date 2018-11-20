@@ -160,16 +160,25 @@ namespace eosiosystem {
                    else
                      reward_stake = voter.staked;
                 }
-               
-               
 
                if(reward_stake > 0) {
                   goc_vote_rewards_table vrewards(_self, reward_to);
 
-                  vrewards.emplace(reward_to, [&](auto &info){
-                        info.reward_time = time_now;
-                        info.rewards = asset(per_stake_reward * reward_stake);
-                  });
+                  auto from_vreward = vrewards.find((uint64_t)0);  //find reward_id = 0 
+
+                  if( from_vreward == vrewards.end() ) {
+                     from_vreward = vrewards.emplace( reward_to, [&]( auto& v ) {
+                        v.reward_id = 0;
+                        v.reward_time  = time_now;
+                        v.rewards = per_stake_reward * reward_stake;
+                     });
+                  } else {
+                     vrewards.modify( from_vreward, 0, [&]( auto& v ) {
+                        v.reward_time  = time_now;
+                        v.rewards += per_stake_reward * reward_stake;
+                     });
+                  }
+                  
                }
              }
           }

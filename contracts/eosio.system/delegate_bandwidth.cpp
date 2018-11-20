@@ -479,10 +479,16 @@ namespace eosiosystem {
 
       auto time_now = now();
       goc_vote_rewards_table vrewards(_self, owner);
-      for(auto& reward : vrewards) {
-          INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
-                                                    { N(gocio.vs), owner, reward.rewards, std::string("Reward for BP Vote") } );
-          vrewards.erase(reward);   
+      
+      auto reward = vrewards.begin();
+      while(reward != vrewards.end()) {
+         if(reward->reward_id == 0) {
+            INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
+                                                    { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for BP Vote") } );
+            reward = vrewards.erase(reward);
+         } else {
+            ++reward;
+         }
       }
 
       // GOC use this part for sending voting rewards
