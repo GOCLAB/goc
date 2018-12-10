@@ -14,8 +14,6 @@
 
 #include <eosio/testing/tester.hpp>
 
-#include <eosio/utilities/tempdir.hpp>
-
 #include <fc/crypto/digest.hpp>
 
 #include <boost/test/unit_test.hpp>
@@ -35,7 +33,7 @@ BOOST_FIXTURE_TEST_CASE(accounts_exists, tester)
 
       tester test;
       chain::controller *control = test.control.get();
-      chain::database &chain1_db = control->db();
+      const chain::database& chain1_db = control->db();
 
       auto nobody = chain1_db.find<account_object, by_name>(config::null_account_name);
       BOOST_CHECK(nobody != nullptr);

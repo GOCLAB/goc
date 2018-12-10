@@ -11,7 +11,6 @@
 #include <eosio/chain/block.hpp>
 #include <eosio/chain/plugin_interface.hpp>
 #include <eosio/producer_plugin/producer_plugin.hpp>
-#include <eosio/utilities/key_conversion.hpp>
 #include <eosio/chain/contract_types.hpp>
 
 #include <fc/network/message_buffer.hpp>
@@ -62,15 +61,6 @@ namespace eosio {
    using socket_ptr = std::shared_ptr<tcp::socket>;
 
    using net_message_ptr = shared_ptr<net_message>;
-
-   template<typename I>
-   std::string itoh(I n, size_t hlen = sizeof(I)<<1) {
-      static const char* digits = "0123456789abcdef";
-      std::string r(hlen, '0');
-      for(size_t i = 0, j = (hlen - 1) * 4 ; i < hlen; ++i, j -= 4)
-         r[i] = digits[(n>>j) & 0x0f];
-      return r;
-   }
 
    struct node_transaction_state {
       transaction_id_type id;
@@ -1523,9 +1513,10 @@ namespace eosio {
       req.req_blocks.mode = catch_up;
       for (auto cc : my_impl->connections) {
          if (cc->fork_head == id ||
-             cc->fork_head_num > num)
+             cc->fork_head_num > num) {
             req.req_blocks.mode = none;
-         break;
+            break;
+         }
       }
       if( req.req_blocks.mode == catch_up ) {
          c->fork_head = id;
@@ -1556,7 +1547,7 @@ namespace eosio {
       else {
          c->last_handshake_recv.last_irreversible_block_num = msg.known_trx.pending;
          reset_lib_num (c);
-         start_sync(c, msg.known_blocks.pending);
+         start_sync(c, msg.known_trx.pending);
       }
    }
 
@@ -2388,7 +2379,7 @@ namespace eosio {
       request_message req;
       bool send_req = false;
       if (msg.known_trx.mode != none) {
-         fc_dlog(logger,"this is a ${m} notice with ${n} blocks", ("m",modes_str(msg.known_trx.mode))("n",msg.known_trx.pending));
+         fc_dlog(logger,"this is a ${m} notice with ${n} transactions", ("m",modes_str(msg.known_trx.mode))("n",msg.known_trx.pending));
       }
       switch (msg.known_trx.mode) {
       case none:
@@ -2422,9 +2413,6 @@ namespace eosio {
       }
       switch (msg.known_blocks.mode) {
       case none : {
-         if (msg.known_trx.mode != normal) {
-            return;
-         }
          break;
       }
       case last_irr_catch_up:

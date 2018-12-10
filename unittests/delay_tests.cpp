@@ -3,8 +3,6 @@
 #include <eosio/chain/producer_object.hpp>
 #include <eosio/chain/global_property_object.hpp>
 #include <eosio/chain/generated_transaction_object.hpp>
-#include <eosio.system/eosio.system.wast.hpp>
-#include <eosio.system/eosio.system.abi.hpp>
 #include <eosio.token/eosio.token.wast.hpp>
 #include <eosio.token/eosio.token.abi.hpp>
 
@@ -2317,16 +2315,10 @@ BOOST_AUTO_TEST_CASE( max_transaction_delay_execute ) { try {
    chain.produce_blocks();
 
    //change max_transaction_delay to 60 sec
-   chain.control->db().modify( chain.control->get_global_properties(),
-                              [&]( auto& gprops ) {
-                                 gprops.configuration.max_transaction_delay = 60;
-                              });
-#ifndef NON_VALIDATING_TEST
-   chain.validating_node->db().modify( chain.validating_node->get_global_properties(),
-                              [&]( auto& gprops ) {
-                                 gprops.configuration.max_transaction_delay = 60;
-                              });
-#endif
+   auto params = chain.control->get_global_properties().configuration;
+   params.max_transaction_delay = 60;
+   chain.push_action( config::system_account_name, N(setparams), config::system_account_name, mutable_variant_object()
+                        ("params", params) );
 
    chain.produce_blocks();
    //should be able to create transaction with delay 60 sec, despite permission delay being 30 days, because max_transaction_delay is 60 sec
