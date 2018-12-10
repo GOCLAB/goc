@@ -3637,7 +3637,7 @@ int main( int argc, char** argv ) {
 
       auto accountPermissions = get_account_permissions(tx_permission);
       if( accountPermissions.empty() ) {
-         accountPermissions = vector<permission_level>{{executer, config::active_name}, {, config::active_name}};
+         accountPermissions = vector<permission_level>{{executer, config::active_name}, {wrap_con, config::active_name}};
       }
 
       auto args = fc::mutable_variant_object()
