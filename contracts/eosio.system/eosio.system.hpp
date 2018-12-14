@@ -151,6 +151,18 @@ namespace eosiosystem {
       time                  settle_time = 0;
       asset                 reward;
 
+      //reserved for different proposal type, WPS and so on
+      uint32_t              proposal_type;
+      uint32_t              reserved1;
+      uint32_t              reserved2;
+      time                  reserved_time1;
+      time                  reserved_time2;
+      account_name          reserved_account_name1;
+      account_name          reserved_account_name2;
+      asset                 work_reward;
+      asset                 reserved_reward;
+
+
       double                total_yeas;
       double                total_nays;
       uint64_t              total_voter = 0;
@@ -167,6 +179,7 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)(hash)
                             (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)
                             (settle_time)(reward)
+                            (proposal_type)(reserved1)(reserved2)(reserved_time1)(reserved_time2)(reserved_account_name1)(reserved_account_name2)(work_reward)(reserved_reward)
                             (total_yeas)(total_nays)(total_voter)
                             (bp_nays)(total_bp)
                             )
