@@ -483,13 +483,18 @@ namespace eosiosystem {
       auto reward = vrewards.begin();
       while(reward != vrewards.end()) {
          if(reward->reward_id == 0) {
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
-                                                    { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for BP Vote") } );
-            reward = vrewards.erase(reward);
+            if(reward->rewards > 0) {
+               INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
+                                                      { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for BP Vote") } );
+               reward = vrewards.erase(reward);
+            }
          } else {
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
-                                                    { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for LOCKED BP Vote") } );
-            reward = vrewards.erase(reward);
+            if(reward->rewards > 0) {
+
+               INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
+                                                      { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for LOCKED BP Vote") } );
+               reward = vrewards.erase(reward);
+            }
          }
       }
 
