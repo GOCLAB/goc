@@ -478,6 +478,8 @@ namespace eosiosystem {
       require_auth( owner );
 
       auto time_now = now();
+
+      // GOC use this part for sending voting rewards
       goc_vote_rewards_table vrewards(_self, owner);
       
       auto reward = vrewards.begin();
@@ -491,11 +493,9 @@ namespace eosiosystem {
             } else {
                reward++;
             }
-            
 
       }
 
-      // GOC use this part for sending voting rewards
       // GOC use this part for sending GN rewards
       
       goc_rewards_table rewards(_self, owner);
