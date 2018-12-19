@@ -65,7 +65,8 @@ namespace eosiosystem {
       int64_t              goc_voter_bucket = 0;
       int64_t              goc_gn_bucket = 0;
       uint32_t             last_gn_bucket_empty = 0;
-      
+      uint32_t             last_voter_bucket_empty = 0;
+      int64_t              total_stake = 0;
 
 
 
@@ -77,7 +78,7 @@ namespace eosiosystem {
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
                                 (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)
                                 (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
-                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty) )
+                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
    };
 
    struct producer_info {
@@ -113,12 +114,14 @@ namespace eosiosystem {
        *  stated.amount * 2 ^ ( weeks_since_launch/weeks_per_year)
        */
       double                      last_vote_weight = 0; /// the vote weight cast the last time the vote was updated
+      int64_t                    last_vote_stake = 0;
 
       /**
        * Total vote weight delegated to this voter.
        */
       double                      proxied_vote_weight= 0; /// the total vote weight delegated to this voter as a proxy
       bool                        is_proxy = 0; /// whether the voter is a proxy for others
+      int64_t                     proxied_vote_stake = 0; /// the total stake delegated to this voter as a proxy
 
 
       uint32_t                    reserved1 = 0;
@@ -128,7 +131,7 @@ namespace eosiosystem {
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
+      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(last_vote_stake)(proxied_vote_weight)(proxied_vote_stake)(is_proxy)(reserved1)(reserved2)(reserved3) )
    };
 
    struct goc_proposal_info {
@@ -148,6 +151,18 @@ namespace eosiosystem {
       time                  settle_time = 0;
       asset                 reward;
 
+      //reserved for different proposal type, WPS and so on
+      uint32_t              proposal_type;
+      uint32_t              reserved1;
+      uint32_t              reserved2;
+      time                  reserved_time1;
+      time                  reserved_time2;
+      account_name          reserved_account_name1;
+      account_name          reserved_account_name2;
+      asset                 work_reward;
+      asset                 reserved_reward;
+
+
       double                total_yeas;
       double                total_nays;
       uint64_t              total_voter = 0;
@@ -164,6 +179,7 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( goc_proposal_info, (id)(owner)(fee)(proposal_name)(proposal_content)(url)(hash)
                             (create_time)(vote_starttime)(bp_vote_starttime)(bp_vote_endtime)
                             (settle_time)(reward)
+                            (proposal_type)(reserved1)(reserved2)(reserved_time1)(reserved_time2)(reserved_account_name1)(reserved_account_name2)(work_reward)(reserved_reward)
                             (total_yeas)(total_nays)(total_voter)
                             (bp_nays)(total_bp)
                             )
@@ -181,6 +197,15 @@ namespace eosiosystem {
      EOSLIB_SERIALIZE(goc_vote_info, (owner)(vote)(vote_time)(vote_update_time)(settle_time))     
    };
 
+   struct goc_vote_reward_info {
+      uint64_t      reward_id = 0;
+      time          reward_time;
+      int64_t       rewards = 0;
+
+      uint64_t primary_key() const { return reward_id;}
+
+      EOSLIB_SERIALIZE( goc_vote_reward_info, (reward_id)(reward_time)(rewards) ) 
+   };
 
    struct goc_reward_info {
       time          reward_time;
@@ -195,8 +220,6 @@ namespace eosiosystem {
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
 
-
-
    typedef eosio::multi_index< N(producers), producer_info,
                                indexed_by<N(prototalvote), const_mem_fun<producer_info, double, &producer_info::by_votes>  >
                                >  producers_table;
@@ -210,6 +233,8 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
    typedef eosio::multi_index< N(gocrewards), goc_reward_info>      goc_rewards_table;
+   typedef eosio::multi_index< N(gocvrewards), goc_vote_reward_info>      goc_vote_rewards_table;
+
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
@@ -265,6 +290,24 @@ namespace eosiosystem {
          void undelegatebw( account_name from, account_name receiver,
                             asset unstake_net_quantity, asset unstake_cpu_quantity );
 
+         /**
+          *  GOC will reward voter who lock delegate and vote for long time.
+          *  all stake is counted in vote weight, reward calculated every day (with declared time ratio) but only settled when finished.
+          *  lock for others will increase receiver's stake and reward.
+          *  lock method need at least 10K GOC.
+          *  use lock_type to set lock time, 0 for normal (same as delefatebw, no lock), others will auto refund when time finished.
+          *  if you unlock with force flag, ratio is 1.
+          *  here is the reward calculate table.
+          *  time    ratio    lock_type         force refund ratio
+          *  normal  1.0      use delegatebw    N/A
+          *  15days  1.25     1                 1.0
+          *  30days  1.5      2                 1.0
+          *  60days  1.75     3                 1.0
+          *  90days  2.0      4                 1.0
+          */
+         void lockbw( account_name from, account_name receiver,
+                          asset stake_net_quantity, asset stake_cpu_quantity, bool transfer, uint8_t lock_type );
+         void unlockbw( account_name from, account_name receiver, uint32_t lock_id, bool force_end );
 
          /**
           * Increases receiver's ram quota based upon current price and quantity of
@@ -300,6 +343,8 @@ namespace eosiosystem {
           *  unstaked tokens belonging to owner
           */
          void refund( account_name owner );
+
+         void gocreward( account_name owner );
 
          // functions defined in voting.cpp
 

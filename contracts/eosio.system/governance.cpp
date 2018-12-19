@@ -38,7 +38,7 @@ void system_contract::gocstake(account_name payer)
     auto res_itr = userres.find(payer);
     if (res_itr == userres.end())
     {
-        //no record for stake 
+        //no record for stake, RAM is from payer
         res_itr = userres.emplace(payer, [&](auto &res) {
             res.owner = payer;
             res.governance_stake = actual_quant;
@@ -65,7 +65,7 @@ void system_contract::gocstake(account_name payer)
     if(actual_quant > asset(0))
         INLINE_ACTION_SENDER(eosio::token, transfer)
         (N(gocio.token), {payer, N(active)},
-        {payer, N(gocio.gstake), actual_quant, std::string("stake goc")});
+        {payer, N(gocio.gstake), actual_quant, std::string("stake for GN")});
 }
 
 void system_contract::gocunstake(account_name receiver)
@@ -108,7 +108,8 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
      {owner, N(gocio.gns), fee, std::string("create proposal")});
 
     uint64_t new_id = _gocproposals.available_primary_key();
-    //create proposal
+    
+    //create proposal, RAM is from proposer, so they need have some to create proposal
     _gocproposals.emplace(owner, [&](auto &info) {
         info.id = new_id;
         info.owner = owner;
@@ -295,6 +296,7 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
     {
         eosio::print("creating vote for ", name{voter}, " ", pid, " ", yea, "\n");
 
+        // RAM is from voter, so they need have some to vote
         votes.emplace(voter, [&](auto &info) {
             info.owner = voter;
             info.vote = yea;
@@ -317,6 +319,7 @@ void system_contract::gocvote(account_name voter, uint64_t pid, bool yea)
         //save voted info to user rewards
         goc_rewards_table rewards(_self, voter);
 
+        // RAM is from system
         rewards.emplace(_self, [&](auto &info){
             info.reward_time = 0;
             info.proposal_id = pid;

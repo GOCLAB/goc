@@ -29,81 +29,95 @@ static inline void print_debug(account_name receiver, const action_trace& ar) {
    }
 }
 
-action_trace apply_context::exec_one()
+void apply_context::exec_one( action_trace& trace )
 {
    auto start = fc::time_point::now();
-
-   const auto& cfg = control.get_global_properties().configuration;
-   try {
-      const auto& a = control.get_account( receiver );
-      privileged = a.privileged;
-      auto native = control.find_apply_handler( receiver, act.account, act.name );
-      if( native ) {
-         if( trx_context.can_subjectively_fail && control.is_producing_block()) {
-            control.check_contract_list( receiver );
-            control.check_action_list( act.account, act.name );
-         }
-         (*native)( *this );
-      }
-
-      if( a.code.size() > 0
-          && !(act.account == config::system_account_name && act.name == N( setcode ) &&
-               receiver == config::system_account_name)) {
-         if( trx_context.can_subjectively_fail && control.is_producing_block()) {
-            control.check_contract_list( receiver );
-            control.check_action_list( act.account, act.name );
-         }
-         try {
-            control.get_wasm_interface().apply( a.code_version, a.code, *this );
-         } catch( const wasm_exit& ) {}
-      }
-
-   } FC_RETHROW_EXCEPTIONS(warn, "pending console output: ${console}", ("console", _pending_console_output.str()))
 
    action_receipt r;
    r.receiver         = receiver;
    r.act_digest       = digest_type::hash(act);
+
+   trace.trx_id = trx_context.id;
+   trace.block_num = control.pending_block_state()->block_num;
+   trace.block_time = control.pending_block_time();
+   trace.producer_block_id = control.pending_producer_block_id();
+   trace.act = act;
+   trace.context_free = context_free;
+
+   const auto& cfg = control.get_global_properties().configuration;
+   try {
+      try {
+         const auto& a = control.get_account( receiver );
+         privileged = a.privileged;
+         auto native = control.find_apply_handler( receiver, act.account, act.name );
+         if( native ) {
+            if( trx_context.enforce_whiteblacklist && control.is_producing_block() ) {
+               control.check_contract_list( receiver );
+               control.check_action_list( act.account, act.name );
+            }
+            (*native)( *this );
+         }
+
+         if( a.code.size() > 0
+             && !(act.account == config::system_account_name && act.name == N( setcode ) &&
+                  receiver == config::system_account_name) ) {
+            if( trx_context.enforce_whiteblacklist && control.is_producing_block() ) {
+               control.check_contract_list( receiver );
+               control.check_action_list( act.account, act.name );
+            }
+            try {
+               control.get_wasm_interface().apply( a.code_version, a.code, *this );
+            } catch( const wasm_exit& ) {}
+         }
+      } FC_RETHROW_EXCEPTIONS( warn, "pending console output: ${console}", ("console", _pending_console_output.str()) )
+   } catch( fc::exception& e ) {
+      trace.receipt = r; // fill with known data
+      trace.except = e;
+      finalize_trace( trace, start );
+      throw;
+   }
+
    r.global_sequence  = next_global_sequence();
    r.recv_sequence    = next_recv_sequence( receiver );
 
    const auto& account_sequence = db.get<account_sequence_object, by_name>(act.account);
-   r.code_sequence    = account_sequence.code_sequence;
-   r.abi_sequence     = account_sequence.abi_sequence;
+   r.code_sequence    = account_sequence.code_sequence; // could be modified by action execution above
+   r.abi_sequence     = account_sequence.abi_sequence;  // could be modified by action execution above
 
    for( const auto& auth : act.authorization ) {
       r.auth_sequence[auth.actor] = next_auth_sequence( auth.actor );
    }
 
-   action_trace t(r);
-   t.trx_id = trx_context.id;
-   t.block_num = control.pending_block_state()->block_num;
-   t.block_time = control.pending_block_time();
-   t.producer_block_id = control.pending_producer_block_id();
-   t.account_ram_deltas = std::move( _account_ram_deltas );
-   _account_ram_deltas.clear();
-   t.act = act;
-   t.context_free = context_free;
-   t.console = _pending_console_output.str();
+   trace.receipt = r;
 
    trx_context.executed.emplace_back( move(r) );
 
+   finalize_trace( trace, start );
+
    if ( control.contracts_console() ) {
-      print_debug(receiver, t);
+      print_debug(receiver, trace);
    }
-
-   reset_console();
-
-   t.elapsed = fc::time_point::now() - start;
-   return t;
 }
 
-void apply_context::exec()
+void apply_context::finalize_trace( action_trace& trace, const fc::time_point& start )
+{
+   trace.account_ram_deltas = std::move( _account_ram_deltas );
+   _account_ram_deltas.clear();
+
+   trace.console = _pending_console_output.str();
+   reset_console();
+
+   trace.elapsed = fc::time_point::now() - start;
+}
+
+void apply_context::exec( action_trace& trace )
 {
    _notified.push_back(receiver);
-   trace = exec_one();
+   exec_one( trace );
    for( uint32_t i = 1; i < _notified.size(); ++i ) {
       receiver = _notified[i];
-      trace.inline_traces.emplace_back( exec_one() );
+      trace.inline_traces.emplace_back( );
+      exec_one( trace.inline_traces.back() );
    }
 
    if( _cfa_inline_actions.size() > 0 || _inline_actions.size() > 0 ) {
@@ -191,6 +205,9 @@ void apply_context::execute_inline( action&& a ) {
    EOS_ASSERT( code != nullptr, action_validate_exception,
                "inline action's code account ${account} does not exist", ("account", a.account) );
 
+   bool enforce_actor_whitelist_blacklist = trx_context.enforce_whiteblacklist && control.is_producing_block();
+   flat_set<account_name> actors;
+
    for( const auto& auth : a.authorization ) {
       auto* actor = control.db().find<account_object, by_name>(auth.actor);
       EOS_ASSERT( actor != nullptr, action_validate_exception,
@@ -198,6 +215,12 @@ void apply_context::execute_inline( action&& a ) {
       EOS_ASSERT( control.get_authorization_manager().find_permission(auth) != nullptr, action_validate_exception,
                   "inline action's authorizations include a non-existent permission: ${permission}",
                   ("permission", auth) );
+      if( enforce_actor_whitelist_blacklist )
+         actors.insert( auth.actor );
+   }
+
+   if( enforce_actor_whitelist_blacklist ) {
+      control.check_actor_list( actors );
    }
 
    // No need to check authorization if: replaying irreversible blocks; contract is privileged; or, contract is calling itself.
@@ -235,7 +258,10 @@ void apply_context::schedule_deferred_transaction( const uint128_t& sender_id, a
    EOS_ASSERT( trx.context_free_actions.size() == 0, cfa_inside_generated_tx, "context free actions are not currently allowed in generated transactions" );
    trx.expiration = control.pending_block_time() + fc::microseconds(999'999); // Rounds up to nearest second (makes expiration check unnecessary)
    trx.set_reference_block(control.head_block_id()); // No TaPoS check necessary
-   control.validate_referenced_accounts( trx );
+
+   bool enforce_actor_whitelist_blacklist = trx_context.enforce_whiteblacklist && control.is_producing_block()
+                                             && !control.sender_avoids_whitelist_blacklist_enforcement( receiver );
+   trx_context.validate_referenced_accounts( trx, enforce_actor_whitelist_blacklist );
 
    // Charge ahead of time for the additional net usage needed to retire the deferred transaction
    // whether that be by successfully executing, soft failure, hard failure, or expiration.
@@ -272,8 +298,7 @@ void apply_context::schedule_deferred_transaction( const uint128_t& sender_id, a
    }
 
    uint32_t trx_size = 0;
-   auto& d = control.db();
-   if ( auto ptr = d.find<generated_transaction_object,by_sender_id>(boost::make_tuple(receiver, sender_id)) ) {
+   if ( auto ptr = db.find<generated_transaction_object,by_sender_id>(boost::make_tuple(receiver, sender_id)) ) {
       EOS_ASSERT( replace_existing, deferred_tx_duplicate, "deferred transaction with the same sender_id and payer already exists" );
 
       // TODO: Remove the following subjective check when the deferred trx replacement RAM bug has been fixed with a hard fork.
@@ -283,7 +308,7 @@ void apply_context::schedule_deferred_transaction( const uint128_t& sender_id, a
       // TODO: The logic of the next line needs to be incorporated into the next hard fork.
       // add_ram_usage( ptr->payer, -(config::billable_size_v<generated_transaction_object> + ptr->packed_trx.size()) );
 
-      d.modify<generated_transaction_object>( *ptr, [&]( auto& gtx ) {
+      db.modify<generated_transaction_object>( *ptr, [&]( auto& gtx ) {
             gtx.sender      = receiver;
             gtx.sender_id   = sender_id;
             gtx.payer       = payer;
@@ -294,7 +319,7 @@ void apply_context::schedule_deferred_transaction( const uint128_t& sender_id, a
             trx_size = gtx.set( trx );
          });
    } else {
-      d.create<generated_transaction_object>( [&]( auto& gtx ) {
+      db.create<generated_transaction_object>( [&]( auto& gtx ) {
             gtx.trx_id      = trx.id();
             gtx.sender      = receiver;
             gtx.sender_id   = sender_id;

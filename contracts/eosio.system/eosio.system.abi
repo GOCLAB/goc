@@ -390,7 +390,9 @@
         {"name":"producers",            "type":"account_name[]"},
         {"name":"staked",               "type":"int64"},
         {"name":"last_vote_weight",     "type":"float64"},
+        {"name":"last_vote_stake",      "type":"int64"},
         {"name":"proxied_vote_weight",  "type":"float64"},
+        {"name":"proxied_vote_stake",   "type":"int64"},
         {"name":"is_proxy",             "type":"bool"}
       ]
     },{
@@ -410,6 +412,15 @@
         {"name":"bp_vote_endtime",      "type":"time_point_sec"},
         {"name":"settle_time",          "type":"time_point_sec"},
         {"name":"reward",               "type":"asset"},
+        {"name":"proposal_type",        "type":"uint32"},
+        {"name":"reserved1",            "type":"uint32"},
+        {"name":"reserved2",            "type":"uint32"},
+        {"name":"reserved_time1",       "type":"time_point_sec"},
+        {"name":"reserved_time2",       "type":"time_point_sec"},
+        {"name":"reserved_account_name1",       "type":"account_name"},
+        {"name":"reserved_account_name2",       "type":"account_name"},
+        {"name":"work_reward",          "type":"asset"},
+        {"name":"reserved_reward",      "type":"asset"},
         {"name":"total_yeas",           "type":"float64"},
         {"name":"total_nays",           "type":"float64"},
         {"name":"total_voter",          "type":"uint64"},
@@ -426,6 +437,14 @@
         {"name":"vote_update_time",     "type":"time_point_sec"}
       ]
     },{
+      "name": "goc_vote_reward_info",
+      "base": "",
+      "fields": [
+        {"name":"reward_id",            "type":"uint64"},
+        {"name":"reward_time",          "type":"time_point_sec"},
+        {"name":"rewards",              "type":"int64"}
+      ]
+    },{
       "name": "goc_reward_info",
       "base": "",
       "fields": [
@@ -433,6 +452,12 @@
         {"name":"proposal_id",          "type":"uint64"},
         {"name":"rewards",              "type":"asset"},
         {"name":"settle_time",          "type":"time_point_sec"}
+      ]
+    },{
+      "name": "gocreward",
+      "base": "",
+      "fields": [
+         {"name":"owner", "type":"account_name"}
       ]
     },{
       "name": "claimrewards",
@@ -632,6 +657,10 @@
       "type": "voteproducer",
       "ricardian_contract": ""
    },{
+      "name": "gocreward",
+      "type": "gocreward",
+      "ricardian_contract": ""
+   },{
       "name": "claimrewards",
       "type": "claimrewards",
       "ricardian_contract": ""
@@ -729,6 +758,12 @@
       "type": "goc_reward_info",
       "index_type": "i64",
       "key_names" : ["proposal_id"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "gocvrewards",
+      "type": "goc_vote_reward_info",
+      "index_type": "i64",
+      "key_names" : ["reward_id"],
       "key_types" : ["uint64"]
     },{
        "name": "namebids",
