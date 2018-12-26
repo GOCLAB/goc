@@ -167,7 +167,7 @@ namespace eosiosystem {
                   auto from_vreward = vrewards.find((uint64_t)0);  //find reward_id = 0 
 
                   if( from_vreward == vrewards.end() ) {
-                     from_vreward = vrewards.emplace( reward_to, [&]( auto& v ) {
+                     from_vreward = vrewards.emplace( _self, [&]( auto& v ) {
                         v.reward_id = 0;
                         v.reward_time  = time_now;
                         v.rewards = per_stake_reward * reward_stake;

@@ -109,8 +109,8 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
 
     uint64_t new_id = _gocproposals.available_primary_key();
     
-    //create proposal, RAM is from proposer, so they need have some to create proposal
-    _gocproposals.emplace(owner, [&](auto &info) {
+    //create proposal, RAM is from system, so they need have some to create proposal
+    _gocproposals.emplace(_self, [&](auto &info) {
         info.id = new_id;
         info.owner = owner;
         info.fee = fee;
