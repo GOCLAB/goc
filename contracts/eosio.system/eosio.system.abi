@@ -330,7 +330,9 @@
          {"name":"goc_vote_start_time",           "type":"uint32"},
          {"name":"goc_voter_bucket",              "type":"uint64"},
          {"name":"goc_gn_bucket",                 "type":"uint64"},
-         {"name":"last_gn_bucket_empty",           "type":"uint32"}
+         {"name":"last_gn_bucket_empty",          "type":"uint32"},
+         {"name":"last_voter_bucket_empty",       "type":"uint32"},
+         {"name":"total_stake",                   "type":"int64"}
       ]
     },{
       "name": "producer_info",
