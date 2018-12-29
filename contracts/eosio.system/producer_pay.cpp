@@ -199,11 +199,7 @@ namespace eosiosystem {
 
         //add all ended and not settled proposal to container
         for ( auto it = idx.cbegin(); it != idx.cend(); ++it ) {
-<<<<<<< HEAD
             if(time_now >= it->bp_vote_endtime && it->settle_time == 0) 
-=======
-            if(_gstate.last_gn_bucket_empty <= it->bp_vote_endtime && it->settle_time == 0) 
->>>>>>> a direction typo
             {
                 end_proposals.push_back( it->id );
             
