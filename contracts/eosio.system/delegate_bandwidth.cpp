@@ -504,13 +504,15 @@ namespace eosiosystem {
       {
          //reward_time = 0 means new voted reward, not available for settle.
          if(reward.reward_time != 0 && reward.rewards != asset(0)) {
-               //  take GOC from gocio.gns account
-               INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
-                                                   { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
+               //  take GOC from gocio.gns account, only when transfer reward not settled
+               if(reward.settle_time == 0) {
+                  INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
+                                                      { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
 
-               rewards.modify(reward, 0 , [&](auto &info){
-                     info.settle_time = time_now;
-               });                                  
+                  rewards.modify(reward, 0 , [&](auto &info){
+                        info.settle_time = time_now;
+                  });
+               }                                  
          }
          //keep reward info
          //rewards.erase(reward);
