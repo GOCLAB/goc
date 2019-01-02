@@ -484,10 +484,10 @@ namespace eosiosystem {
       
       auto reward = vrewards.begin();
       while(reward != vrewards.end()) {
-            if(reward->rewards > 0) {
+            if(reward->rewards > 100000) {
                // only reward > 0 will run, else skip to next
                INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
-                                                      { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for BP Vote") } );
+                                                      { N(gocio.vs), owner, asset(reward->rewards / 1000000000), std::string("Reward for BP Vote") } );
                //if transfered, erase and move it to next.
                reward = vrewards.erase(reward);
             } else {

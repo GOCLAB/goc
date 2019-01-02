@@ -141,7 +141,8 @@ namespace eosiosystem {
       //GOC cal vote rewards every 24H
       if (time_now >= _gstate.last_voter_bucket_empty + seconds_per_day) {
 
-          int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_voter_bucket / _gstate.total_stake);
+         // multiply 1000000000 to avoid zero casting. goc_voter_bucket max value will be 10^10 * 0.04879 * days / 365 * 0.5%, so the data is safe.
+          int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_voter_bucket * 1000000000 / _gstate.total_stake);
 
           // count all voters
           for(auto& voter : _voters) {
@@ -166,6 +167,8 @@ namespace eosiosystem {
 
                   auto from_vreward = vrewards.find((uint64_t)0);  //find reward_id = 0 
 
+                  //if stake too huge, may overflow in extreme condition. normal condition is safe
+                  //TODO: 
                   if( from_vreward == vrewards.end() ) {
                      from_vreward = vrewards.emplace( _self, [&]( auto& v ) {
                         v.reward_id = 0;
