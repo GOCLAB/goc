@@ -2835,4 +2835,194 @@ BOOST_FIXTURE_TEST_CASE( goc_bp_vote_test, eosio_system_tester ) try {
 
 } FC_LOG_AND_RETHROW()
 
+
+BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test::tolerance(1e-10)) try {
+
+   const double continuous_rate = 4.879 / 100.;
+   const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
+   const double secs_per_year   = 52 * 7 * 24 * 3600;
+
+   const asset large_asset = core_from_string("80.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(defproducerb), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvoterb), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+
+   issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
+   issue( "bob111111111", core_from_string("100000.0000"),  config::system_account_name );
+
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_0", "pcontent_0", "url_0", "hash_0", 1 ) ); //pid = 0;
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("bob111111111") );
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 0, true) );
+
+   auto rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
+   BOOST_REQUIRE_EQUAL(core_from_string("0.0000"), rewards["rewards"].as<asset>());
+
+   BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
+   BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducerb)));
+
+   transfer( config::system_account_name, "producvotera", core_from_string("400000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   BOOST_REQUIRE_EQUAL(success(), vote( N(producvotera), { N(defproducera) }));
+
+   transfer( config::system_account_name, "producvoterb", core_from_string("400000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvoterb", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   BOOST_REQUIRE_EQUAL(success(), vote( N(producvoterb), { N(defproducerb) }));
+
+   BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+
+   {
+      uint64_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
+      uint64_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
+      uint64_t             goc_vote_start_time = 24 * 3600 * 3;  // vote start after 3 Days
+      produce_block( fc::seconds(goc_governance_vote_period + goc_bp_vote_period + goc_vote_start_time - 5*60 ) );
+
+      const auto     initial_global_state      = get_global_state();
+      const uint64_t initial_claim_time        = initial_global_state["last_pervote_bucket_fill"].as_uint64();
+      const asset initial_supply  = get_token_supply();
+
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+
+      auto rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
+      BOOST_REQUIRE_EQUAL(0, rewards["rewards"].as<asset>().get_amount());
+
+      produce_block( fc::seconds( 5 * 60 ) );
+
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducerb), N(claimrewards), mvo()("owner", "defproducerb")));
+
+      const auto     global_state      = get_global_state();
+      const uint64_t claim_time        = global_state["last_pervote_bucket_fill"].as_uint64();
+
+      auto usecs_between_fills = claim_time - initial_claim_time;
+      int64_t expected_to_gns = int64_t( ( initial_supply.get_amount() * double(usecs_between_fills) * 3 * continuous_rate / 20. ) / usecs_per_year );
+
+      rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
+      // every single proposal have max reward limit
+      const int64_t goc_max_proposal_reward = 1000000;
+      if(expected_to_gns > goc_max_proposal_reward)
+         expected_to_gns = goc_max_proposal_reward;
+
+      BOOST_REQUIRE_EQUAL(expected_to_gns, rewards["rewards"].as<asset>().get_amount());
+
+      const asset initial_balance = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(initial_balance.get_amount(), 0);
+
+      produce_blocks(50);
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(bob111111111), N(gocreward), mvo()("owner", "bob111111111")));
+      const asset balance = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(balance.get_amount(), expected_to_gns);
+
+      // ask for gn reward again
+      produce_blocks(5000);  //avoid  billed CPU time (2000 us) is greater than the maximum billable CPU time for the transaction (1868 us)
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(bob111111111), N(gocreward), mvo()("owner", "bob111111111")));
+      const asset balance2 = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(balance2.get_amount(), expected_to_gns);
+
+      // after 30 days, test stability
+      produce_block( fc::days(30) );
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+
+      rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
+      BOOST_REQUIRE_EQUAL(expected_to_gns, rewards["rewards"].as<asset>().get_amount());
+      const asset balance3 = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(balance3.get_amount(), expected_to_gns);
+   }
+} FC_LOG_AND_RETHROW()
+
+
+BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, * boost::unit_test::tolerance(1e-10)) try {
+
+   const double continuous_rate = 4.879 / 100.;
+   const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
+   const double secs_per_year   = 52 * 7 * 24 * 3600;
+
+   const asset large_asset = core_from_string("80.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+
+   issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
+   issue( "bob111111111", core_from_string("100000.0000"),  config::system_account_name );
+   issue( "carol1111111", core_from_string("100000.0000"),  config::system_account_name );
+   
+
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_0", "pcontent_0", "url_0", "hash_0", 1 ) ); //pid = 0;
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_1", "pcontent_1", "url_1", "hash_1", 1 ) ); //pid = 1;
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_2", "pcontent_2", "url_2", "hash_2", 1 ) ); //pid = 1;
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("bob111111111") );
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 0, true) );
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 1, true) );
+
+   BOOST_REQUIRE_EQUAL( success(), goc_stake("carol1111111") );
+   BOOST_REQUIRE_EQUAL( success(), goc_vote("carol1111111", 0, true) );
+
+   auto rewards_b_0 = get_rewards_info( N(bob111111111), (uint64_t)0 );
+   BOOST_REQUIRE_EQUAL(core_from_string("0.0000"), rewards_b_0["rewards"].as<asset>());
+   auto rewards_b_1 = get_rewards_info( N(bob111111111), (uint64_t)1 );
+   BOOST_REQUIRE_EQUAL(core_from_string("0.0000"), rewards_b_1["rewards"].as<asset>());
+   auto rewards_c_0 = get_rewards_info( N(carol1111111), (uint64_t)0 );
+   BOOST_REQUIRE_EQUAL(core_from_string("0.0000"), rewards_c_0["rewards"].as<asset>());
+   
+   BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
+   transfer( config::system_account_name, "producvotera", core_from_string("400000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   BOOST_REQUIRE_EQUAL(success(), vote( N(producvotera), { N(defproducera) }));
+
+   BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+
+   {
+      uint64_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
+      uint64_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
+      uint64_t             goc_vote_start_time = 24 * 3600 * 3;  // vote start after 3 Days
+      produce_block( fc::seconds(goc_governance_vote_period + goc_bp_vote_period + goc_vote_start_time) );
+      
+      const auto     initial_global_state      = get_global_state();
+      const uint64_t initial_claim_time        = initial_global_state["last_pervote_bucket_fill"].as_uint64();
+
+      const asset initial_supply  = get_token_supply();
+
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+
+      const auto     global_state      = get_global_state();
+      const uint64_t claim_time        = global_state["last_pervote_bucket_fill"].as_uint64();
+      
+      auto usecs_between_fills = claim_time - initial_claim_time;
+      
+      int64_t expected_to_gns = int64_t( ( initial_supply.get_amount() * double(usecs_between_fills) * 3 * continuous_rate / 20. ) / usecs_per_year );
+      
+      auto rewards_b_0 = get_rewards_info( N(bob111111111), (uint64_t)0 );
+      auto rewards_b_1 = get_rewards_info( N(bob111111111), (uint64_t)1 );
+      auto rewards_c_0 = get_rewards_info( N(carol1111111), (uint64_t)0 );
+      
+      // every single proposal have max reward limit
+      const int64_t goc_max_proposal_reward = 1000000;
+
+      auto per_proposal_reward = expected_to_gns / 3; //there are 3 proposals
+      if(expected_to_gns / 3 > goc_max_proposal_reward)
+         per_proposal_reward = goc_max_proposal_reward;
+
+      BOOST_REQUIRE_EQUAL(per_proposal_reward / 2, rewards_b_0["rewards"].as<asset>().get_amount());
+      BOOST_REQUIRE_EQUAL(per_proposal_reward    , rewards_b_1["rewards"].as<asset>().get_amount());
+      BOOST_REQUIRE_EQUAL(per_proposal_reward / 2, rewards_c_0["rewards"].as<asset>().get_amount());
+
+      const asset initial_balance_b = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(initial_balance_b.get_amount(), 0);
+      const asset initial_balance_c = get_balance(N(carol1111111));
+      BOOST_REQUIRE_EQUAL(initial_balance_c.get_amount(), 0);
+
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(bob111111111), N(gocreward), mvo()("owner", "bob111111111")));
+      const asset balance_b = get_balance(N(bob111111111));
+      BOOST_REQUIRE_EQUAL(balance_b.get_amount(), per_proposal_reward * 3 / 2);
+
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(carol1111111), N(gocreward), mvo()("owner", "carol1111111")));
+      const asset balance_c = get_balance(N(carol1111111));
+      BOOST_REQUIRE_EQUAL(balance_c.get_amount(), per_proposal_reward / 2);
+      
+   }
+
+} FC_LOG_AND_RETHROW()
+
+
+
+
+
 BOOST_AUTO_TEST_SUITE_END()

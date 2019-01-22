@@ -406,24 +406,29 @@ public:
       return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "voter_info", data, abi_serializer_max_time );
    }
 
+   fc::variant get_rewards_info( const account_name& act, const uint64_t id ) {
+      vector<char> data = get_row_by_id( config::system_account_name, act, N(gocrewards), id );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_reward_info", data, abi_serializer_max_time );
+   }
+
    fc::variant get_producer_info( const account_name& act ) {
       vector<char> data = get_row_by_account( config::system_account_name, config::system_account_name, N(producers), act );
-      return abi_ser.binary_to_variant( "producer_info", data, abi_serializer_max_time );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "producer_info", data, abi_serializer_max_time );
    }
 
    fc::variant get_proposal_info( const uint64_t id ) {
       vector<char> data = get_row_by_id( config::system_account_name, config::system_account_name, N(proposals), id );
-      return abi_ser.binary_to_variant( "goc_proposal_info", data, abi_serializer_max_time );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_proposal_info", data, abi_serializer_max_time );
    }
 
    fc::variant get_votes_info(const uint64_t pid, const account_name& act ) {
       vector<char> data = get_row_by_account( config::system_account_name, pid, N(votes), act );
-      return abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
    }
 
    fc::variant get_bpvotes_info(const uint64_t pid, const account_name& act ) {
       vector<char> data = get_row_by_account( config::system_account_name, pid, N(bpvotes), act );
-      return abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_vote_info", data, abi_serializer_max_time );
    }
 
    void create_currency( name contract, name manager, asset maxsupply ) {
