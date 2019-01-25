@@ -16,6 +16,7 @@ namespace eosiosystem {
     _producers(_self,_self),
     _gocproposals(_self,_self),
     _global(_self,_self),
+    _lockband(_self,_self),
     _rammarket(_self,_self)
    {
       //print( "construct system\n" );

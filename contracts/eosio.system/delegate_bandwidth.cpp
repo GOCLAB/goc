@@ -74,23 +74,7 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
    };
 
-   struct locked_bandwidth {
-      uint64_t       id;
-      account_name   from;
-      account_name   to;
-      uint8_t        lock_type;
-      time           lock_time;
-      eosio::asset   net_amount;
-      eosio::asset   cpu_amount;
-      eosio::asset   reward_bucket;
-      bool           voting;
-      uint32_t       active_days;
 
-      uint64_t  primary_key()const { return id; }
-
-      EOSLIB_SERIALIZE( locked_bandwidth, (id)(from)(to)(lock_type)(lock_time)(net_amount)(cpu_amount)(reward_bucket)(voting)(active_days) )
-
-   };
 
    /**
     *  These tables are designed to be constructed in the scope of the relevant user, this
@@ -100,7 +84,7 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
    typedef eosio::multi_index< N(refunds), refund_request>      refunds_table;
 
-   typedef eosio::multi_index< N(lockband), locked_bandwidth>   locked_bandwidth_table;
+
 
 
 
@@ -428,6 +412,28 @@ namespace eosiosystem {
       changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
    } // undelegatebw
 
+
+   int64_t system_contract::calc_net_cpu_weight(asset net_quantity, asset cpu_quantity, uint8_t lock_type)
+   {
+      if (lock_type < 0 || lock_type > 4)
+         return 0;
+      double weight_coeff[] = {0, 0.25, 0.5, 1.0, 0.5};
+      return static_cast<int64_t>((net_quantity.amount + cpu_quantity.amount) * weight_coeff[lock_type]);
+   }
+
+   uint32_t calc_lock_time_length(uint8_t lock_type)
+   {
+      if(lock_type == 1)
+         return seconds_per_day * 7;
+      else if(lock_type == 2)
+         return seconds_per_day * 30;
+      else if(lock_type == 3)
+         return seconds_per_day * 60;
+      else if(lock_type == 4)
+         return seconds_per_day * 90;
+      return 0;
+   }
+
    void system_contract::lockbw(account_name from, account_name receiver,
                                      asset stake_net_quantity,
                                      asset stake_cpu_quantity, bool transfer, uint8_t lock_type) 
@@ -440,23 +446,30 @@ namespace eosiosystem {
 
       require_auth(from);
 
-      locked_bandwidth_table lockband(_self, receiver);
+      int64_t net_cpu_weight = calc_net_cpu_weight(stake_net_quantity, stake_cpu_quantity, lock_type);
+      
 
-      auto idx = lockband.available_primary_key();
+      auto idx = _lockband.available_primary_key();
 
-      lockband.emplace( receiver, [&]( auto& lock ) { 
+      _lockband.emplace( receiver, [&]( auto& lock ) { 
          lock.id = idx;
          lock.from = from;
          lock.to = receiver;
          lock.lock_type = lock_type;
          lock.lock_time = now();
+         lock.lock_end_time = now() + calc_lock_time_length(lock_type);
          lock.net_amount = stake_net_quantity;
          lock.cpu_amount = stake_cpu_quantity;
-         lock.reward_bucket = asset(0);
+         lock.net_cpu_weight = net_cpu_weight;
+         lock.reward_bucket = 0;
          lock.voting = false;
       });
 
+      _gstate.goc_lockbw_stake += net_cpu_weight;
+
       changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
+
+      eosio::print("success lockbw ", idx, "\n");
 
       
    }
@@ -464,13 +477,42 @@ namespace eosiosystem {
    void system_contract::unlockbw( account_name from, account_name receiver, uint32_t lock_id, bool force_end ) {
       
       require_auth(from);
+      auto time_now = now();
 
-      locked_bandwidth_table lockband(_self, receiver);
+      const auto &locked_bandwidth = _lockband.get(lock_id, "locked delegate bandwidth not exist");
 
-      const auto &locked_bandwidth = lockband.get(lock_id, "locked delegate bandwidth not exist");
+      eosio_assert( 0 != locked_bandwidth.lock_end_time, "unlock again");
+      eosio_assert( force_end || time_now > locked_bandwidth.lock_end_time, "lock time not end");
 
       //if lock is time 
 
+      if(force_end) {
+
+      } else {
+         goc_vote_rewards_table vrewards(_self, locked_bandwidth.from);
+
+         auto from_vreward = vrewards.find(lock_id);
+
+         if( from_vreward == vrewards.end() ) {
+            from_vreward = vrewards.emplace( _self, [&]( auto& v ) {
+               v.reward_id = lock_id;
+               v.reward_time  = time_now;
+               v.rewards = locked_bandwidth.reward_bucket;
+            });
+         } else {
+            vrewards.modify( from_vreward, from, [&]( auto& v ) {
+               v.reward_time  = time_now;
+               v.rewards += locked_bandwidth.reward_bucket;
+            });
+         }
+      }
+
+      _lockband.modify(locked_bandwidth, from, [&](auto &info) {
+         info.lock_end_time = 0;
+      });
+
+      eosio::print("success unlockbw ", locked_bandwidth.id, "\n");
+      _gstate.goc_lockbw_stake -= locked_bandwidth.net_cpu_weight;
 
    }
 
@@ -493,7 +535,6 @@ namespace eosiosystem {
             } else {
                reward++;
             }
-
       }
 
       // GOC use this part for sending GN rewards

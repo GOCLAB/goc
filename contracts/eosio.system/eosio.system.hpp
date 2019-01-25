@@ -64,6 +64,7 @@ namespace eosiosystem {
       
       int64_t              goc_voter_bucket = 0;
       int64_t              goc_gn_bucket = 0;
+      int64_t              goc_lockbw_stake = 0;
       uint32_t             last_gn_bucket_empty = 0;
       uint32_t             last_voter_bucket_empty = 0;
       int64_t              total_stake = 0;
@@ -78,7 +79,7 @@ namespace eosiosystem {
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
                                 (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)
                                 (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
-                                (goc_voter_bucket)(goc_gn_bucket)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
+                                (goc_voter_bucket)(goc_gn_bucket)(goc_lockbw_stake)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
    };
 
    struct producer_info {
@@ -185,6 +186,28 @@ namespace eosiosystem {
                             )
    };
 
+   struct locked_bandwidth {
+      uint64_t       id;
+      account_name   from;
+      account_name   to;
+      uint8_t        lock_type;
+      time           lock_time;
+      time           lock_end_time;
+      eosio::asset   net_amount;
+      eosio::asset   cpu_amount;
+      int64_t        net_cpu_weight;
+      int64_t        reward_bucket;
+      bool           voting;
+      uint32_t       active_days;
+
+      uint64_t  primary_key()const { return id; }
+      uint64_t  by_lock_end_time()const      { return lock_end_time; }
+
+      EOSLIB_SERIALIZE( locked_bandwidth, (id)(from)(to)(lock_type)(lock_time)(lock_end_time)(net_amount)(cpu_amount)(net_cpu_weight)(reward_bucket)(voting)(active_days) )
+
+   };
+
+
    struct goc_vote_info {
      account_name           owner;
      bool                   vote;
@@ -230,6 +253,10 @@ namespace eosiosystem {
                                //indexed_by<N(by_nay), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_nay_votes>  >
                                > goc_proposals_table;
 
+   typedef eosio::multi_index< N(lockband), locked_bandwidth,
+                              indexed_by<N(byendtime), const_mem_fun<locked_bandwidth, uint64_t, &locked_bandwidth::by_lock_end_time>  >
+                              >   locked_bandwidth_table;
+
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;
    typedef eosio::multi_index< N(bpvotes), goc_vote_info> goc_bp_votes_table;
    typedef eosio::multi_index< N(gocrewards), goc_reward_info>      goc_rewards_table;
@@ -248,6 +275,7 @@ namespace eosiosystem {
          producers_table        _producers;
          goc_proposals_table    _gocproposals;
          global_state_singleton _global;
+         locked_bandwidth_table _lockband;
 
          eosio_global_state     _gstate;
          rammarket              _rammarket;
@@ -295,7 +323,7 @@ namespace eosiosystem {
           *  all stake is counted in vote weight, reward calculated every day (with declared time ratio) but only settled when finished.
           *  lock for others will increase receiver's stake and reward.
           *  lock method need at least 10K GOC.
-          *  use lock_type to set lock time, 0 for normal (same as delefatebw, no lock), others will auto refund when time finished.
+          *  use lock_type to set lock time, 0 for normal (same as delegatebw, no lock), others will auto refund when time finished.
           *  if you unlock with force flag, ratio is 1.
           *  here is the reward calculate table.
           *  time    ratio    lock_type         force refund ratio
@@ -376,6 +404,8 @@ namespace eosiosystem {
          //defind in delegate_bandwidth.cpp
          void changebw( account_name from, account_name receiver,
                         asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
+
+         int64_t calc_net_cpu_weight(asset net_quantity, asset cpu_quantity, uint8_t lock_type);
 
          //defined in voting.hpp
          static eosio_global_state get_default_parameters();

@@ -237,6 +237,26 @@
          {"name":"unstake_cpu_quantity", "type":"asset"}
       ]
     },{
+      "name": "lockbw",
+      "base": "",
+      "fields": [
+         {"name":"from", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"stake_net_quantity", "type":"asset"},
+         {"name":"stake_cpu_quantity", "type":"asset"},
+         {"name":"transfer", "type":"bool"},
+         {"name":"lock_type", "type":"uint8"}
+      ]
+    },{
+      "name": "unlockbw",
+      "base": "",
+      "fields": [
+         {"name":"from", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"lock_id", "type":"uint32"},
+         {"name":"force_end", "type":"bool"}
+      ]
+    },{
       "name": "refund",
       "base": "",
       "fields": [
@@ -250,6 +270,23 @@
          {"name":"to", "type":"account_name"},
          {"name":"net_weight", "type":"asset"},
          {"name":"cpu_weight", "type":"asset"}
+      ]
+    },{
+      "name": "locked_bandwidth",
+      "base": "",
+      "fields": [
+         {"name":"id", "type":"uint64"},
+         {"name":"from", "type":"account_name"},
+         {"name":"to", "type":"account_name"},
+         {"name":"lock_type", "type":"uint8"},
+         {"name":"lock_time", "type":"time_point_sec"},
+         {"name":"lock_end_time", "type":"time_point_sec"},
+         {"name":"net_weight", "type":"asset"},
+         {"name":"cpu_weight", "type":"asset"},
+         {"name":"net_cpu_weight", "type":"int64"},
+         {"name":"reward_bucket", "type":"int64"},
+         {"name":"voting", "type":"bool"},
+         {"name":"active_days", "type":"uint32"}
       ]
     },{
       "name": "user_resources",
@@ -330,7 +367,9 @@
          {"name":"goc_vote_start_time",           "type":"uint32"},
          {"name":"goc_voter_bucket",              "type":"uint64"},
          {"name":"goc_gn_bucket",                 "type":"uint64"},
-         {"name":"last_gn_bucket_empty",           "type":"uint32"}
+         {"name":"goc_lockbw_stake",             "type":"uint64"},
+         {"name":"last_gn_bucket_empty",          "type":"uint32"},
+         {"name":"total_stake",                   "type":"uint64"}
       ]
     },{
       "name": "producer_info",
@@ -629,6 +668,14 @@
       "type": "undelegatebw",
       "ricardian_contract": ""
    },{
+      "name": "lockbw",
+      "type": "lockbw",
+      "ricardian_contract": ""
+   },{
+      "name": "unlockbw",
+      "type": "unlockbw",
+      "ricardian_contract": ""
+   },{
       "name": "refund",
       "type": "refund",
       "ricardian_contract": ""
@@ -740,6 +787,12 @@
       "type": "delegated_bandwidth",
       "index_type": "i64",
       "key_names" : ["to"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "lockband",
+      "type": "locked_bandwidth",
+      "index_type": "i64",
+      "key_names" : ["id"],
       "key_types" : ["uint64"]
     },{
       "name": "rammarket",

@@ -141,7 +141,7 @@ namespace eosiosystem {
       //GOC cal vote rewards every 24H
       if (time_now >= _gstate.last_voter_bucket_empty + seconds_per_day) {
 
-          int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_voter_bucket / _gstate.total_stake);
+          int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_voter_bucket / _gstate.total_stake + _gstate.goc_lockbw_stake);
 
           // count all voters
           for(auto& voter : _voters) {
@@ -180,6 +180,19 @@ namespace eosiosystem {
                   }
                   
                }
+             }
+          }
+
+          // count all lockbw
+          auto idx = _lockband.get_index<N(byendtime)>();
+          for( auto it = idx.cend(); it != idx.cbegin(); ) {
+             --it;
+             if (time_now < it->lock_end_time) {
+                idx.modify(it, 0, [&](auto& info){
+                   info.reward_bucket += per_stake_reward * it->net_cpu_weight;
+                });
+             } else {
+                break;
              }
           }
 
