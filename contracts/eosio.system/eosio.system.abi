@@ -251,7 +251,7 @@
       "name": "unlockbw",
       "base": "",
       "fields": [
-         {"name":"from", "type":"account_name"},
+         {"name":"owner", "type":"account_name"},
          {"name":"receiver", "type":"account_name"},
          {"name":"lock_id", "type":"uint32"},
          {"name":"force_end", "type":"bool"}
@@ -276,8 +276,7 @@
       "base": "",
       "fields": [
          {"name":"id", "type":"uint64"},
-         {"name":"from", "type":"account_name"},
-         {"name":"to", "type":"account_name"},
+         {"name":"owner", "type":"account_name"},
          {"name":"lock_type", "type":"uint8"},
          {"name":"lock_time", "type":"time_point_sec"},
          {"name":"lock_end_time", "type":"time_point_sec"},
@@ -297,7 +296,8 @@
          {"name":"cpu_weight", "type":"asset"},
          {"name":"ram_bytes", "type":"uint64"},
          {"name":"governance_stake", "type":"asset"},
-         {"name":"goc_stake_freeze", "type":"time_point_sec"}
+         {"name":"goc_stake_freeze", "type":"time_point_sec"},
+         {"name":"locked", "type":"bool"}
       ]
     },{
       "name": "total_resources",

@@ -196,7 +196,6 @@ namespace eosiosystem {
              }
           }
 
-
           //empty the voter bucket every time, left token saved in vs account
           _gstate.goc_voter_bucket = 0;
           //reset voter bucket empty time

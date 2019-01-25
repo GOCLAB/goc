@@ -188,8 +188,7 @@ namespace eosiosystem {
 
    struct locked_bandwidth {
       uint64_t       id;
-      account_name   from;
-      account_name   to;
+      account_name   owner;
       uint8_t        lock_type;
       time           lock_time;
       time           lock_end_time;
@@ -203,7 +202,7 @@ namespace eosiosystem {
       uint64_t  primary_key()const { return id; }
       uint64_t  by_lock_end_time()const      { return lock_end_time; }
 
-      EOSLIB_SERIALIZE( locked_bandwidth, (id)(from)(to)(lock_type)(lock_time)(lock_end_time)(net_amount)(cpu_amount)(net_cpu_weight)(reward_bucket)(voting)(active_days) )
+      EOSLIB_SERIALIZE( locked_bandwidth, (id)(owner)(lock_type)(lock_time)(lock_end_time)(net_amount)(cpu_amount)(net_cpu_weight)(reward_bucket)(voting)(active_days) )
 
    };
 
@@ -403,7 +402,7 @@ namespace eosiosystem {
 
          //defind in delegate_bandwidth.cpp
          void changebw( account_name from, account_name receiver,
-                        asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
+                        asset stake_net_quantity, asset stake_cpu_quantity, bool transfer, bool locked );
 
          int64_t calc_net_cpu_weight(asset net_quantity, asset cpu_quantity, uint8_t lock_type);
 
