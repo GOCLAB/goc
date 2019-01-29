@@ -38,12 +38,13 @@ namespace eosiosystem {
       int64_t       ram_bytes = 0;
       asset         governance_stake;
       time          goc_stake_freeze = 0;
-      bool          locked = false;
+      asset         locked_net = asset(0);
+      asset         locked_cpu = asset(0);
 
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake)(goc_stake_freeze)(locked) )
+      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake)(goc_stake_freeze)(locked_net)(locked_cpu) )
    };
 
 
@@ -217,7 +218,7 @@ namespace eosiosystem {
    }
 
    void system_contract::changebw( account_name from, account_name receiver,
-                                   const asset stake_net_delta, const asset stake_cpu_delta, bool transfer, bool locked )
+                                   const asset stake_net_delta, const asset stake_cpu_delta, bool transfer )
    {
       require_auth( from );
       eosio_assert( stake_net_delta != asset(0) || stake_cpu_delta != asset(0), "should stake non-zero amount" );
@@ -264,15 +265,11 @@ namespace eosiosystem {
                   tot.owner = receiver;
                   tot.net_weight    = stake_net_delta;
                   tot.cpu_weight    = stake_cpu_delta;
-                  if(locked)
-                     tot.locked     = true;
                });
          } else {
             totals_tbl.modify( tot_itr, from == receiver ? from : 0, [&]( auto& tot ) {
                   tot.net_weight    += stake_net_delta;
                   tot.cpu_weight    += stake_cpu_delta;
-                  if(locked)
-                     tot.locked = true;
                });
          }
          eosio_assert( asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth" );
@@ -402,7 +399,7 @@ namespace eosiosystem {
       eosio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
       eosio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
 
-      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer, false);
+      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
    } // delegatebw
 
    void system_contract::undelegatebw( account_name from, account_name receiver,
@@ -414,18 +411,19 @@ namespace eosiosystem {
       eosio_assert( _gstate.total_activated_stake >= min_activated_stake,
                     "cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)" );
 
-      // check for have delegate or have locked before. 
+      // check for have delegate or have sufficient staked. 
       // 1.can't undelegate if not delegate before 
-      // 2.can't undelegate if it is locked
+      // 2.can't undelegate if insufficient staked
       user_resources_table   totals_tbl( _self, from );
       auto tot_itr = totals_tbl.find( from );
       if( tot_itr ==  totals_tbl.end() ) {
          eosio_assert(false, "undelegatebw fail");
       } else {
-         eosio_assert(!(tot_itr->locked), "locked, can not undelegatebw");
+         eosio_assert((unstake_net_quantity <= tot_itr->net_weight - tot_itr->locked_net), "insufficient staked net can not undelegatebw");
+         eosio_assert((unstake_cpu_quantity <= tot_itr->cpu_weight - tot_itr->locked_cpu), "insufficient staked cpu can not undelegatebw");
       }
 
-      changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false, false);
+      changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
    } // undelegatebw
 
 
@@ -454,27 +452,32 @@ namespace eosiosystem {
                                      asset stake_net_quantity,
                                      asset stake_cpu_quantity, bool transfer, uint8_t lock_type) 
    {
+      require_auth(from);
+
       eosio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
       eosio_assert( stake_net_quantity >= asset(0), "must stake a positive amount" );
       eosio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
       eosio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
       eosio_assert( lock_type > 0 && lock_type < 5, "invalid lock_type ");
-
-      require_auth(from);
+      
       auto time_now = now();
 
-      // check for have locked before. an account can't lock twice
       user_resources_table   totals_tbl( _self, receiver );
       auto tot_itr = totals_tbl.find( receiver );
-      if( tot_itr !=  totals_tbl.end() ) {
-         eosio_assert(!(tot_itr->locked), "locked, can not lock again");
+      if( tot_itr != totals_tbl.end() ) {
+         totals_tbl.modify( tot_itr, from, [&]( auto& tot ) {
+               tot.locked_net += stake_net_quantity;
+               tot.locked_cpu += stake_cpu_quantity;
+            });
+      } else {
+         eosio_assert(false, "receiver account don't exist");
       }
 
       int64_t net_cpu_weight = calc_net_cpu_weight(stake_net_quantity, stake_cpu_quantity, lock_type);
       
       auto idx = _lockband.available_primary_key();
 
-      _lockband.emplace( receiver, [&]( auto& lock ) { 
+      _lockband.emplace( from, [&]( auto& lock ) { 
          lock.id = idx;
          lock.owner = receiver;
          lock.lock_type = lock_type;
@@ -489,7 +492,7 @@ namespace eosiosystem {
 
       _gstate.goc_lockbw_stake += net_cpu_weight;
 
-      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer, true);
+      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
    }
 
    void system_contract::unlockbw( account_name owner, account_name receiver, uint32_t lock_id, bool force_end ) {
@@ -509,7 +512,8 @@ namespace eosiosystem {
          eosio_assert(false, "unlockbw fail");
       } else {
          totals_tbl.modify( tot_itr, owner, [&]( auto& tot ) {
-               tot.locked = false;
+               tot.locked_net -= locked_bandwidth.net_amount;
+               tot.locked_cpu -= locked_bandwidth.cpu_amount;
             });
       }
 
@@ -539,7 +543,6 @@ namespace eosiosystem {
       });
 
       _gstate.goc_lockbw_stake -= locked_bandwidth.net_cpu_weight;
-
    }
 
    void system_contract::gocreward(const account_name owner ) {

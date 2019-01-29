@@ -402,7 +402,7 @@ namespace eosiosystem {
 
          //defind in delegate_bandwidth.cpp
          void changebw( account_name from, account_name receiver,
-                        asset stake_net_quantity, asset stake_cpu_quantity, bool transfer, bool locked );
+                        asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
 
          int64_t calc_net_cpu_weight(asset net_quantity, asset cpu_quantity, uint8_t lock_type);
 

@@ -297,7 +297,8 @@
          {"name":"ram_bytes", "type":"uint64"},
          {"name":"governance_stake", "type":"asset"},
          {"name":"goc_stake_freeze", "type":"time_point_sec"},
-         {"name":"locked", "type":"bool"}
+         {"name":"locked_net", "type":"asset"},
+         {"name":"locked_cpu", "type":"asset"}
       ]
     },{
       "name": "total_resources",
