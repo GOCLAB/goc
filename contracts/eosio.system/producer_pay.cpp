@@ -144,6 +144,7 @@ namespace eosiosystem {
          // multiply 1000000000 to avoid zero casting. goc_voter_bucket max value will be 10^10 * 0.04879 * days / 365 * 0.5%, so the data is safe.
           int64_t per_stake_reward = static_cast<int64_t>(_gstate.goc_voter_bucket * 1000000000 / _gstate.total_stake);
 
+          int32_t voter_count = 0;
           // count all voters
           for(auto& voter : _voters) {
              account_name reward_to;
@@ -163,6 +164,8 @@ namespace eosiosystem {
                 }
 
                if(reward_stake > 0) {
+
+                  voter_count++;
                   goc_vote_rewards_table vrewards(_self, reward_to);
 
                   auto from_vreward = vrewards.find((uint64_t)0);  //find reward_id = 0 
@@ -185,6 +188,9 @@ namespace eosiosystem {
                }
              }
           }
+
+          //print voter count for debug
+          eosio::print("voter count is ", voter_count, "\n");
 
 
           //empty the voter bucket every time, left token saved in vs account
