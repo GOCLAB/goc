@@ -363,6 +363,7 @@
          {"name":"goc_stake_limit",               "type":"int64"},
          {"name":"goc_action_fee",                "type":"int64"},
          {"name":"goc_max_proposal_reward",       "type":"int64"},
+         {"name":"goc_max_prop_reward_per_voter", "type":"int64"},
          {"name":"goc_governance_vote_period",    "type":"uint32"},
          {"name":"goc_bp_vote_period",            "type":"uint32"},
          {"name":"goc_vote_start_time",           "type":"uint32"},

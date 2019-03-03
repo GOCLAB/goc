@@ -2898,9 +2898,10 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
 
       rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
       // every single proposal have max reward limit
-      const int64_t goc_max_proposal_reward = 1000000;
-      if(expected_to_gns > goc_max_proposal_reward)
-         expected_to_gns = goc_max_proposal_reward;
+      const int64_t goc_max_proposal_reward = 500000000;
+      const int64_t goc_max_prop_reward_per_voter = 50000000;
+      if(expected_to_gns > goc_max_prop_reward_per_voter)
+         expected_to_gns = goc_max_prop_reward_per_voter;
 
       BOOST_REQUIRE_EQUAL(expected_to_gns, rewards["rewards"].as<asset>().get_amount());
 
@@ -2994,15 +2995,20 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
       auto rewards_c_0 = get_rewards_info( N(carol1111111), (uint64_t)0 );
       
       // every single proposal have max reward limit
-      const int64_t goc_max_proposal_reward = 1000000;
+      const int64_t goc_max_proposal_reward = 500000000;
+      const int64_t goc_max_prop_reward_per_voter = 50000000;
 
       auto per_proposal_reward = expected_to_gns / 3; //there are 3 proposals
       if(expected_to_gns / 3 > goc_max_proposal_reward)
          per_proposal_reward = goc_max_proposal_reward;
 
-      BOOST_REQUIRE_EQUAL(per_proposal_reward / 2, rewards_b_0["rewards"].as<asset>().get_amount());
-      BOOST_REQUIRE_EQUAL(per_proposal_reward    , rewards_b_1["rewards"].as<asset>().get_amount());
-      BOOST_REQUIRE_EQUAL(per_proposal_reward / 2, rewards_c_0["rewards"].as<asset>().get_amount());
+      auto expected_rewards_b_0 = (per_proposal_reward / 2 > goc_max_prop_reward_per_voter) ? goc_max_prop_reward_per_voter : per_proposal_reward / 2;
+      auto expected_rewards_b_1 = (per_proposal_reward     > goc_max_prop_reward_per_voter) ? goc_max_prop_reward_per_voter : per_proposal_reward    ;
+      auto expected_rewards_c_0 = (per_proposal_reward / 2 > goc_max_prop_reward_per_voter) ? goc_max_prop_reward_per_voter : per_proposal_reward / 2;
+
+      BOOST_REQUIRE_EQUAL(expected_rewards_b_0, rewards_b_0["rewards"].as<asset>().get_amount());
+      BOOST_REQUIRE_EQUAL(expected_rewards_b_1, rewards_b_1["rewards"].as<asset>().get_amount());
+      BOOST_REQUIRE_EQUAL(expected_rewards_c_0, rewards_c_0["rewards"].as<asset>().get_amount());
 
       const asset initial_balance_b = get_balance(N(bob111111111));
       BOOST_REQUIRE_EQUAL(initial_balance_b.get_amount(), 0);
@@ -3011,11 +3017,11 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
 
       BOOST_REQUIRE_EQUAL(success(), push_action(N(bob111111111), N(gocreward), mvo()("owner", "bob111111111")));
       const asset balance_b = get_balance(N(bob111111111));
-      BOOST_REQUIRE_EQUAL(balance_b.get_amount(), per_proposal_reward * 3 / 2);
+      BOOST_REQUIRE_EQUAL(balance_b.get_amount(), expected_rewards_b_0 + expected_rewards_b_1);
 
       BOOST_REQUIRE_EQUAL(success(), push_action(N(carol1111111), N(gocreward), mvo()("owner", "carol1111111")));
       const asset balance_c = get_balance(N(carol1111111));
-      BOOST_REQUIRE_EQUAL(balance_c.get_amount(), per_proposal_reward / 2);
+      BOOST_REQUIRE_EQUAL(balance_c.get_amount(), expected_rewards_c_0);
       
    }
 

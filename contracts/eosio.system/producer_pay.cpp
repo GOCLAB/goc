@@ -202,8 +202,8 @@ namespace eosiosystem {
           _gstate.last_voter_bucket_empty = time_now;
       }
 
-      // GOC cal gn rewards on prod's claimreward action, every 24H * 7 once 
-      if(time_now >= _gstate.last_gn_bucket_empty + seconds_per_day * 7) {
+      // GOC cal gn rewards on prod's claimreward action, every 24H * 14 once 
+      if(time_now >= _gstate.last_gn_bucket_empty + seconds_per_day * 14) {
 
         auto idx = _gocproposals.get_index<N(byendtime)>();
 
@@ -255,6 +255,8 @@ namespace eosiosystem {
                 if(vote_count > 0.0)
                 {
                     vote_reward_token = static_cast<int64_t>((double)per_proposal_reward / (double)vote_count);
+                    if (vote_reward_token > _gstate.goc_max_prop_reward_per_voter)
+                        vote_reward_token = _gstate.goc_max_prop_reward_per_voter;
 
                     // check all vote in votes info table
                     for(auto& vote : votes)

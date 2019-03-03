@@ -57,7 +57,8 @@ namespace eosiosystem {
       int64_t              goc_proposal_fee_limit=  10000000;
       int64_t              goc_stake_limit = 1000000000;
       int64_t              goc_action_fee = 10000;
-      int64_t              goc_max_proposal_reward = 1000000;
+      int64_t              goc_max_proposal_reward = 500000000;
+      int64_t              goc_max_prop_reward_per_voter = 50000000;
       uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_vote_start_time = 24 * 3600 * 3;  // vote start after 3 Days
@@ -77,7 +78,7 @@ namespace eosiosystem {
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
-                                (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)
+                                (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)(goc_max_prop_reward_per_voter)
                                 (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
                                 (goc_voter_bucket)(goc_gn_bucket)(goc_lockbw_stake)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
    };

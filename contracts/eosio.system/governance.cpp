@@ -95,10 +95,10 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     require_auth(owner);
     auto time_now = now();
 
-    eosio_assert(pname.size() < 512, "name too long");
+    eosio_assert(pname.size() < 128, "name too long");
     eosio_assert(pcontent.size() < 1024, "content too long");
-    eosio_assert(url.size() < 512, "url too long");
-    eosio_assert(hash.size() < 512, "hash too long");
+    eosio_assert(url.size() < 128, "url too long");
+    eosio_assert(hash.size() < 128, "hash too long");
     eosio_assert(fee.symbol == asset().symbol, "fee must be system token");
     eosio_assert(fee.amount >= _gstate.goc_proposal_fee_limit, "insufficient fee");
 
@@ -143,10 +143,10 @@ void system_contract::gocupprop(const account_name owner, uint64_t id, const std
 {
     require_auth(owner);
 
-    eosio_assert(pname.size() < 512, "name too long");
+    eosio_assert(pname.size() < 128, "name too long");
     eosio_assert(pcontent.size() < 1024, "content too long");
-    eosio_assert(url.size() < 512, "url too long");
-    eosio_assert(hash.size() < 512, "hash too long");
+    eosio_assert(url.size() < 128, "url too long");
+    eosio_assert(hash.size() < 128, "hash too long");
 
     const auto &proposal_updating = _gocproposals.get(id, "proposal not exist");
 
