@@ -4,7 +4,7 @@
 
 namespace eosiosystem {
 
-   const int64_t  min_pervote_daily_pay = 100'0000;
+   const int64_t  min_pervote_daily_pay = 1000'0000;
    const int64_t  min_activated_stake   = 150'000'000'0000;
    const double   continuous_rate       = 0.04879;          // 5% annual rate
    const double   perblock_rate         = 0.0025;           // 0.25%
@@ -148,7 +148,7 @@ namespace eosiosystem {
              account_name reward_to;
              int64_t reward_stake;
 
-             if(voter.staked > 0 || voter.proxied_vote_stake >0) {
+             if(voter.staked > 100'000'0000 || voter.proxied_vote_stake >100'000'0000) { //100 000 GOC
                 //proxy will take all proxied stake reward and its own stake reward
                 if(voter.proxy) {
                    reward_to = 0;
