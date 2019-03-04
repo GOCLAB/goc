@@ -2898,8 +2898,8 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
 
       rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
       // every single proposal have max reward limit
-      const int64_t goc_max_proposal_reward = 500000000;
-      const int64_t goc_max_prop_reward_per_voter = 50000000;
+      const int64_t goc_max_proposal_reward = 500'000'0000;
+      const int64_t goc_max_prop_reward_per_voter = 50'000'0000;
       if(expected_to_gns > goc_max_prop_reward_per_voter)
          expected_to_gns = goc_max_prop_reward_per_voter;
 
@@ -2995,8 +2995,8 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
       auto rewards_c_0 = get_rewards_info( N(carol1111111), (uint64_t)0 );
       
       // every single proposal have max reward limit
-      const int64_t goc_max_proposal_reward = 500000000;
-      const int64_t goc_max_prop_reward_per_voter = 50000000;
+      const int64_t goc_max_proposal_reward = 500'000'0000;
+      const int64_t goc_max_prop_reward_per_voter = 50'000'0000;
 
       auto per_proposal_reward = expected_to_gns / 3; //there are 3 proposals
       if(expected_to_gns / 3 > goc_max_proposal_reward)

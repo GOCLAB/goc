@@ -57,8 +57,8 @@ namespace eosiosystem {
       int64_t              goc_proposal_fee_limit=  10000000;
       int64_t              goc_stake_limit = 1000000000;
       int64_t              goc_action_fee = 10000;
-      int64_t              goc_max_proposal_reward = 500000000;
-      int64_t              goc_max_prop_reward_per_voter = 50000000;
+      int64_t              goc_max_proposal_reward = 500'000'0000;
+      int64_t              goc_max_prop_reward_per_voter = 50'000'0000;
       uint32_t             goc_governance_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_bp_vote_period = 24 * 3600 * 7;  // 7 days
       uint32_t             goc_vote_start_time = 24 * 3600 * 3;  // vote start after 3 Days
