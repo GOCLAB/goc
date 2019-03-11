@@ -531,6 +531,7 @@ namespace eosiosystem {
                v.rewards = locked_bandwidth.reward_bucket;
             });
          } else {
+            // shouldn't to here
             vrewards.modify( from_vreward, owner, [&]( auto& v ) {
                v.reward_time  = time_now;
                v.rewards += locked_bandwidth.reward_bucket;
@@ -555,10 +556,10 @@ namespace eosiosystem {
       
       auto reward = vrewards.begin();
       while(reward != vrewards.end()) {
-            if(reward->rewards > 0) {
+            if(reward->rewards > 100000) {
                // only reward > 0 will run, else skip to next
                INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.vs),N(active)},
-                                                      { N(gocio.vs), owner, asset(reward->rewards), std::string("Reward for BP Vote") } );
+                                                      { N(gocio.vs), owner, asset(reward->rewards / 1'000'000'000), std::string("Reward for BP Vote") } );
                //if transfered, erase and move it to next.
                reward = vrewards.erase(reward);
             } else {

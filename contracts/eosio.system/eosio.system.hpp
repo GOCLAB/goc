@@ -70,6 +70,9 @@ namespace eosiosystem {
       uint32_t             last_voter_bucket_empty = 0;
       int64_t              total_stake = 0;
 
+      uint32_t             curr_index = 0;
+      uint32_t             max_shard = 24;
+      int64_t              per_stake_reward = 0;
 
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
@@ -80,7 +83,8 @@ namespace eosiosystem {
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) 
                                 (goc_proposal_fee_limit)(goc_stake_limit)(goc_action_fee)(goc_max_proposal_reward)(goc_max_prop_reward_per_voter)
                                 (goc_governance_vote_period)(goc_bp_vote_period)(goc_vote_start_time)
-                                (goc_voter_bucket)(goc_gn_bucket)(goc_lockbw_stake)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake) )
+                                (goc_voter_bucket)(goc_gn_bucket)(goc_lockbw_stake)(last_gn_bucket_empty)(last_voter_bucket_empty)(total_stake)
+                                (curr_index)(max_shard)(per_stake_reward) )
    };
 
    struct producer_info {
@@ -390,6 +394,8 @@ namespace eosiosystem {
 
          // functions defined in producer_pay.cpp
          void claimrewards( const account_name& owner );
+
+         void gnrewards( const account_name& owner );
 
          void setpriv( account_name account, uint8_t ispriv );
 

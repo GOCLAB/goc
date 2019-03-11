@@ -369,9 +369,13 @@
          {"name":"goc_vote_start_time",           "type":"uint32"},
          {"name":"goc_voter_bucket",              "type":"uint64"},
          {"name":"goc_gn_bucket",                 "type":"uint64"},
-         {"name":"goc_lockbw_stake",             "type":"uint64"},
+         {"name":"goc_lockbw_stake",              "type":"uint64"},
          {"name":"last_gn_bucket_empty",          "type":"uint32"},
-         {"name":"total_stake",                   "type":"uint64"}
+         {"name":"last_voter_bucket_empty",       "type":"uint32"},
+         {"name":"total_stake",                   "type":"uint64"},
+         {"name":"curr_index",                    "type":"uint32"},
+         {"name":"max_shard",                     "type":"uint32"},
+         {"name":"per_stake_reward",            "type":"int64"}
       ]
     },{
       "name": "producer_info",
@@ -502,6 +506,12 @@
       ]
     },{
       "name": "claimrewards",
+      "base": "",
+      "fields": [
+        {"name":"owner",   "type":"account_name"}
+      ]
+    },{
+      "name": "gnrewards",
       "base": "",
       "fields": [
         {"name":"owner",   "type":"account_name"}
@@ -712,6 +722,10 @@
    },{
       "name": "claimrewards",
       "type": "claimrewards",
+      "ricardian_contract": ""
+   },{
+      "name": "gnrewards",
+      "type": "gnrewards",
       "ricardian_contract": ""
    },{
       "name": "setpriv",

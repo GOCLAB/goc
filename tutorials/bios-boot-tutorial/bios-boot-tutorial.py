@@ -164,7 +164,7 @@ def allocateFunds(b, e):
     dist = numpy.random.pareto(1.161, e - b).tolist() # 1.161 = 80/20 rule
     dist.sort()
     dist.reverse()
-    factor = 1_000_000_000 / sum(dist)
+    factor = 5_000_000_000 / sum(dist)
     total = 0
     for i in range(b, e):
         funds = round(factor * dist[i - b] * 10000)
@@ -327,7 +327,7 @@ def stepStartWallet():
     startWallet() 
 def stepStartBoot():
     startNode(0, {'name': 'gocio', 'pvt': args.private_key, 'pub': args.public_key})
-    sleep(1.5)
+    sleep(10)
 def stepInstallSystemContracts():
     run(args.cleos + 'set contract gocio.token ' + args.contracts_dir + 'eosio.token/ ')
     run(args.cleos + 'set contract gocio.msig ' + args.contracts_dir + 'eosio.msig/ ')
@@ -409,7 +409,7 @@ parser.add_argument('--log-path', metavar='', help="Path to log file", default='
 parser.add_argument('--symbol', metavar='', help="The gocio.system symbol", default='GOC')
 parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=50)
 parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=50)
-parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.2)
+parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=10.2)
 parser.add_argument('--min-stake', metavar='', help="Minimum stake before allocating unstaked funds", type=float, default=0.9)
 parser.add_argument('--max-unstaked', metavar='', help="Maximum unstaked funds", type=float, default=1000)
 parser.add_argument('--producer-limit', metavar='', help="Maximum number of producers. (0 = no limit)", type=int, default=9)
