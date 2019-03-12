@@ -571,16 +571,16 @@ namespace eosiosystem {
       
       goc_rewards_table rewards(_self, owner);
 
-      for(auto& reward : rewards)
+      for(auto& idx : rewards)
       {
          //reward_time = 0 means new voted reward, not available for settle.
-         if(reward.reward_time != 0 && reward.rewards != asset(0)) {
+         if(idx.reward_time != 0 && idx.rewards != asset(0)) {
                //  take GOC from gocio.gns account, only when transfer reward not settled
-               if(reward.settle_time == 0) {
+               if(idx.settle_time == 0) {
                   INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio.gns),N(active)},
-                                                      { N(gocio.gns), owner, reward.rewards, std::string("Reward for GN") } );
+                                                      { N(gocio.gns), owner, idx.rewards, std::string("Reward for GN") } );
 
-                  rewards.modify(reward, 0 , [&](auto &info){
+                  rewards.modify(idx, 0 , [&](auto &info){
                         info.settle_time = time_now;
                   });
                }                                  

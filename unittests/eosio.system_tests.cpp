@@ -3031,6 +3031,212 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
 } FC_LOG_AND_RETHROW()
 
 
+BOOST_FIXTURE_TEST_CASE(goc_vreward_test, eosio_system_tester, * boost::unit_test::tolerance(1e-10)) try {
+
+   const double continuous_rate = 4.879 / 100.;
+   const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
+   const double secs_per_year   = 52 * 7 * 24 * 3600;
+
+   const asset large_asset = core_from_string("8000.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1000.0000"), false, large_asset, large_asset );
+   BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
+
+   auto initial_total = get_total_stake( "alice1111111" );
+   BOOST_REQUIRE_EQUAL( 0, initial_total["locked_net"].as<asset>().get_amount());
+   BOOST_REQUIRE_EQUAL( 0, initial_total["locked_cpu"].as<asset>().get_amount());
+
+   // stake(delegatebw) to cpu&net. reward_id is 0
+   transfer( config::system_account_name, "alice1111111", core_from_string("4000000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("alice1111111", core_from_string("1000000000.0000"), core_from_string("1000000000.0000")));
+   // ??? use create_account_with_resources() creat alice1111111 in eosio_system_tester() have delegatebw some GOC, it doesn't include to the "staked"???
+   BOOST_TEST_REQUIRE( 20000000000000 == get_voter_info( "alice1111111" )["staked"].as_uint64() );
+
+   auto total = get_total_stake( "alice1111111" );
+   BOOST_REQUIRE_EQUAL( 10000000000000, total["net_weight"].as<asset>().get_amount() - initial_total["net_weight"].as<asset>().get_amount() );
+   BOOST_REQUIRE_EQUAL( 10000000000000, total["cpu_weight"].as<asset>().get_amount() - initial_total["cpu_weight"].as<asset>().get_amount() );
+   BOOST_REQUIRE_EQUAL(              0, total["locked_net"].as<asset>().get_amount() - initial_total["locked_net"].as<asset>().get_amount() );
+   BOOST_REQUIRE_EQUAL(              0, total["locked_cpu"].as<asset>().get_amount() - initial_total["locked_cpu"].as<asset>().get_amount() );
+
+   const auto     initial_global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 24, initial_global_state["max_shard"].as<uint32_t>() );
+   BOOST_REQUIRE_EQUAL( 0, initial_global_state["curr_index"].as<uint32_t>() );
+   // alice1111111 not yet vote, so the total_stake is 0
+   BOOST_REQUIRE_EQUAL( 0, initial_global_state["total_stake"].as<int64_t>() );
+
+   BOOST_REQUIRE_EQUAL(success(), vote( N(alice1111111), { N(defproducera) }));
+   produce_blocks(10);
+   BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+   
+   // produce_blocks(10);
+   auto     global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 24, global_state["max_shard"].as<uint32_t>() );
+   BOOST_REQUIRE_EQUAL( 1, global_state["curr_index"].as<uint32_t>() );
+   // alice1111111 voted, so the total_stake equal alice1111111's net_weight + cpu_weight
+   BOOST_REQUIRE_EQUAL( 20000000000000, global_state["total_stake"].as<int64_t>() );
+
+   uint32_t max_shard = global_state["max_shard"].as<uint32_t>();
+   produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+   for ( uint32_t i = 1; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+   }
+   global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 24, global_state["max_shard"].as<uint32_t>() );
+   BOOST_REQUIRE_EQUAL( 0, global_state["curr_index"].as<uint32_t>() );
+
+   auto vrewards = get_vote_rewards_info( N(alice1111111), (uint64_t)0 );
+   // rewards is 0, because in the frist cycle, "goc_voter_bucket" is 0
+   BOOST_REQUIRE_EQUAL( 0, vrewards["rewards"].as_uint64() );
+
+   uint64_t goc_voter_bucket = global_state["goc_voter_bucket"].as_uint64();
+   for ( uint32_t i = 0; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+      // claimrewards shard
+      if ( i < get_name_hash(N(claimrewards)) ) {
+         BOOST_REQUIRE_EQUAL( 0, vrewards["rewards"].as_uint64() );
+      } else {
+         BOOST_REQUIRE_EQUAL( ( goc_voter_bucket * 1'000'000'000 / 20000000000000 ) * 20000000000000, vrewards["rewards"].as_uint64() );
+      }
+   }
+   vrewards = get_vote_rewards_info( N(alice1111111), (uint64_t)0 );
+   BOOST_REQUIRE_EQUAL( ( goc_voter_bucket * 1'000'000'000 / 20000000000000 ) * 20000000000000, vrewards["rewards"].as_uint64() );
+
+   // test stability
+   global_state      = get_global_state();
+   uint64_t goc_voter_bucket_2 = global_state["goc_voter_bucket"].as_uint64();
+   for ( uint32_t i = 0; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+   }
+   auto vrewards_2 = get_vote_rewards_info( N(alice1111111), (uint64_t)0 );
+   BOOST_REQUIRE_EQUAL( ( goc_voter_bucket_2 * 1'000'000'000 / 20000000000000 ) * 20000000000000, vrewards_2["rewards"].as_uint64() - vrewards["rewards"].as_uint64() );
+
+} FC_LOG_AND_RETHROW()
+
+
+BOOST_FIXTURE_TEST_CASE(goc_lockbw_unlockbw_test, eosio_system_tester, * boost::unit_test::tolerance(1e-10)) try {
+
+   const double continuous_rate = 4.879 / 100.;
+   const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
+   const double secs_per_year   = 52 * 7 * 24 * 3600;
+
+   const asset large_asset = core_from_string("8000.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1000.0000"), false, large_asset, large_asset );
+   BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
+
+   auto initial_total = get_total_stake( "alice1111111" );
+   BOOST_REQUIRE_EQUAL( 0, initial_total["locked_net"].as<asset>().get_amount());
+   BOOST_REQUIRE_EQUAL( 0, initial_total["locked_cpu"].as<asset>().get_amount());
+
+   transfer( config::system_account_name, "alice1111111", core_from_string("3000000000.0000"), config::system_account_name);
+   transfer( config::system_account_name, "bob111111111", core_from_string("2000000000.0000"), config::system_account_name);
+   transfer( config::system_account_name, "carol1111111", core_from_string("2000000000.0000"), config::system_account_name);
+
+   // stake(delegatebw). reward_id is 0. this step is for claimrewards
+   BOOST_REQUIRE_EQUAL(success(), stake("alice1111111", core_from_string("1000000000.0000"), core_from_string("1000000000.0000")));
+   auto initial_global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 0, initial_global_state["goc_lockbw_stake"].as<int64_t>() );
+   BOOST_REQUIRE_EQUAL(success(), goc_lockbw(N(alice1111111), N(alice1111111), core_from_string("100000000.0000"), core_from_string("100000000.0000"), false, 1)); // lockbw. reward_id is 0
+
+   auto initial_global_state_0      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 2000000000000 * 0.25, initial_global_state_0["goc_lockbw_stake"].as<int64_t>() - initial_global_state["goc_lockbw_stake"].as<int64_t>() );
+   BOOST_REQUIRE_EQUAL(success(), goc_lockbw(N(bob111111111), N(bob111111111), core_from_string("100000000.0000"), core_from_string("100000000.0000"), false, 1)); // lockbw. reward_id is 1
+
+   auto initial_global_state_1      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 2000000000000 * 0.25, initial_global_state_1["goc_lockbw_stake"].as<int64_t>() - initial_global_state_0["goc_lockbw_stake"].as<int64_t>() );
+   BOOST_REQUIRE_EQUAL(success(), goc_lockbw(N(bob111111111), N(bob111111111), core_from_string("200000000.0000"), core_from_string("200000000.0000"), false, 2)); // lockbw. reward_id is 2
+
+   auto initial_global_state_2      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 4000000000000 * 0.5, initial_global_state_2["goc_lockbw_stake"].as<int64_t>() - initial_global_state_1["goc_lockbw_stake"].as<int64_t>() );
+   BOOST_REQUIRE_EQUAL(success(), goc_lockbw(N(carol1111111), N(carol1111111), core_from_string("500000000.0000"), core_from_string("500000000.0000"), false, 1)); // lockbw. reward_id is 3
+   
+   auto initial_global_state_3      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 10000000000000 * 0.25, initial_global_state_3["goc_lockbw_stake"].as<int64_t>() - initial_global_state_2["goc_lockbw_stake"].as<int64_t>() );
+
+   // error case
+   BOOST_REQUIRE_EQUAL(wasm_assert_msg("invalid lock_type "), goc_lockbw(N(carol1111111), N(carol1111111), core_from_string("500000000.0000"), core_from_string("500000000.0000"), false, 0));
+
+   auto locked_id_1 = get_lockband_info(1);
+   auto locked_id_2 = get_lockband_info(2);
+   auto locked_id_3 = get_lockband_info(3);
+   BOOST_REQUIRE_EQUAL( locked_id_1["net_cpu_weight"].as<int64_t>(), 
+                        calc_net_cpu_weight(locked_id_1["net_amount"].as<asset>(), locked_id_1["cpu_amount"].as<asset>(), locked_id_1["lock_type"].as<uint8_t>()) );
+   BOOST_REQUIRE_EQUAL( locked_id_2["net_cpu_weight"].as<int64_t>(), 
+                        calc_net_cpu_weight(locked_id_2["net_amount"].as<asset>(), locked_id_2["cpu_amount"].as<asset>(), locked_id_2["lock_type"].as<uint8_t>()) );
+   BOOST_REQUIRE_EQUAL( locked_id_3["net_cpu_weight"].as<int64_t>(), 
+                        calc_net_cpu_weight(locked_id_3["net_amount"].as<asset>(), locked_id_3["cpu_amount"].as<asset>(), locked_id_3["lock_type"].as<uint8_t>()) );
+
+  // ??? use create_account_with_resources() creat alice1111111 in eosio_system_tester() have delegatebw some GOC, it doesn't include to the "staked"???
+   BOOST_TEST_REQUIRE( 22000000000000 == get_voter_info( "alice1111111" )["staked"].as_uint64() );
+   BOOST_TEST_REQUIRE(  6000000000000 == get_voter_info( "bob111111111" )["staked"].as_uint64() );
+   BOOST_TEST_REQUIRE( 10000000000000 == get_voter_info( "carol1111111" )["staked"].as_uint64() );
+
+   // error case: lock time not end, must set force_end to true.
+   BOOST_REQUIRE_EQUAL(wasm_assert_msg("lock time not end"), goc_unlockbw(N(bob111111111), N(bob111111111), 1, false));
+
+   // unlockbw id is 1
+   BOOST_REQUIRE_EQUAL(success(), goc_unlockbw(N(bob111111111), N(bob111111111), 1, true));
+   
+   auto initial_global_state_4      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 2000000000000 * 0.25, initial_global_state_3["goc_lockbw_stake"].as<int64_t>() - initial_global_state_4["goc_lockbw_stake"].as<int64_t>() );
+
+   // error case: this doeesn't belong to bob111111111
+   BOOST_REQUIRE_EQUAL(wasm_assert_msg("wrong lock_id"), goc_unlockbw(N(bob111111111), N(bob111111111), 3, false));
+   // error case: the bandwidth does not exist
+   BOOST_REQUIRE_EQUAL(wasm_assert_msg("locked delegate bandwidth not exist"), goc_unlockbw(N(bob111111111), N(bob111111111), 4, false));
+
+   initial_global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 24, initial_global_state["max_shard"].as<uint32_t>() );
+   BOOST_REQUIRE_EQUAL( 0, initial_global_state["curr_index"].as<uint32_t>() );
+
+   // alice1111111 not yet vote, so the total_stake is 0
+   BOOST_REQUIRE_EQUAL( 0, initial_global_state["total_stake"].as<int64_t>() );
+
+   
+   BOOST_REQUIRE_EQUAL(success(), vote( N(alice1111111), { N(defproducera) }));
+   uint32_t max_shard = initial_global_state["max_shard"].as<uint32_t>();
+   // spend 1 day
+   for ( uint32_t i = 0; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+   }
+
+   produce_block( fc::seconds(24 * 3600 * (7-1-1)) );
+
+   auto     global_state      = get_global_state();
+   BOOST_REQUIRE_EQUAL( 24, global_state["max_shard"].as<uint32_t>() );
+   BOOST_REQUIRE_EQUAL( 0, global_state["curr_index"].as<uint32_t>() );
+   uint64_t goc_voter_bucket = global_state["goc_voter_bucket"].as_uint64();
+   int64_t total_stake = global_state["total_stake"].as<int64_t>();
+   uint64_t goc_lockbw_stake = global_state["goc_lockbw_stake"].as_uint64();
+
+   locked_id_3 = get_lockband_info(3);
+   int64_t initial_reward_bucket = locked_id_3["reward_bucket"].as<int64_t>();
+
+   int64_t expected_rewards_3 = goc_voter_bucket * 1'000'000'000 / (total_stake + goc_lockbw_stake) * (10000000000000 * 0.25);
+
+   for ( uint32_t i = 0; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+      if( i <= 2) {
+         BOOST_TEST_REQUIRE( initial_reward_bucket == get_lockband_info(3)["reward_bucket"].as<int64_t>() );
+      } else {
+         BOOST_TEST_REQUIRE( initial_reward_bucket + expected_rewards_3 == get_lockband_info(3)["reward_bucket"].as<int64_t>() );
+      }
+   }
+
+   for ( uint32_t i = 0; i < max_shard; ++i ) {
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      produce_block( fc::seconds(24 * 3600 / max_shard + 1) );
+
+      BOOST_TEST_REQUIRE( initial_reward_bucket + expected_rewards_3 == get_lockband_info(3)["reward_bucket"].as<int64_t>() );
+   }
+
+   // alice1111111 voted, so the total_stake equal alice1111111's net_weight + cpu_weight
+   BOOST_REQUIRE_EQUAL( 22000000000000, global_state["total_stake"].as<int64_t>() );
+   
+} FC_LOG_AND_RETHROW()
 
 
 

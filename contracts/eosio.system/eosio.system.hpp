@@ -191,7 +191,7 @@ namespace eosiosystem {
                             )
    };
 
-   struct locked_bandwidth {
+   struct locked_bandwidth_info {
       uint64_t       id;
       account_name   owner;
       uint8_t        lock_type;
@@ -207,7 +207,7 @@ namespace eosiosystem {
       uint64_t  primary_key()const { return id; }
       uint64_t  by_lock_end_time()const      { return lock_end_time; }
 
-      EOSLIB_SERIALIZE( locked_bandwidth, (id)(owner)(lock_type)(lock_time)(lock_end_time)(net_amount)(cpu_amount)(net_cpu_weight)(reward_bucket)(voting)(active_days) )
+      EOSLIB_SERIALIZE( locked_bandwidth_info, (id)(owner)(lock_type)(lock_time)(lock_end_time)(net_amount)(cpu_amount)(net_cpu_weight)(reward_bucket)(voting)(active_days) )
 
    };
 
@@ -257,8 +257,8 @@ namespace eosiosystem {
                                //indexed_by<N(by_nay), const_mem_fun<goc_proposal_info, double, &goc_proposal_info::by_nay_votes>  >
                                > goc_proposals_table;
 
-   typedef eosio::multi_index< N(lockband), locked_bandwidth,
-                              indexed_by<N(byendtime), const_mem_fun<locked_bandwidth, uint64_t, &locked_bandwidth::by_lock_end_time>  >
+   typedef eosio::multi_index< N(lockband), locked_bandwidth_info,
+                              indexed_by<N(byendtime), const_mem_fun<locked_bandwidth_info, uint64_t, &locked_bandwidth_info::by_lock_end_time>  >
                               >   locked_bandwidth_table;
 
    typedef eosio::multi_index< N(votes), goc_vote_info> goc_votes_table;

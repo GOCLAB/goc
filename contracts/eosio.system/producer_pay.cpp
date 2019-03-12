@@ -102,53 +102,6 @@ namespace eosiosystem {
 
       eosio_assert( ct - prod.last_claim_time > useconds_per_day / _gstate.max_shard, "already claimed rewards within past day" );
 
-      const asset token_supply   = token( N(gocio.token)).get_supply(symbol_type(system_token_symbol).name() );
-      const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
-
-      if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
-         auto new_tokens = static_cast<int64_t>( (continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year) );
-         //GOC rules
-         //GOC give 1%(20% of new tokens) for voting
-         auto to_producers       = new_tokens / 5;
-         //GOC give 0.5%(10% of new tokens)  for voting
-         auto to_voters          = new_tokens / 10;
-         //GOC give 0.75%(15% of new tokens) for gn
-         auto to_gns             = new_tokens * 3 / 20;
-         //GOC save 2.75%(55% of new tokens) for worker plan system, means 11/20 saved
-         auto to_savings         = new_tokens - to_producers - to_voters - to_gns;
-
-         //remain the same as EOS
-         auto to_per_block_pay   = to_producers / 4;
-         auto to_per_vote_pay    = to_producers - to_per_block_pay;
-
-         INLINE_ACTION_SENDER(eosio::token, issue)( N(gocio.token), {{N(gocio),N(active)}},
-                                                    {N(gocio), asset(new_tokens), std::string("issue tokens for producer pay and savings")} );
-
-         //GOC add
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
-                                                       { N(gocio), N(gocio.vs), asset(to_voters), "fund voter bucket" } );
-         //GOC add
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
-                                                       { N(gocio), N(gocio.gns), asset(to_gns), "fund gn bucket" } );                                              
-         
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
-                                                       { N(gocio), N(gocio.saving), asset(to_savings), "unallocated inflation" } );
-
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
-                                                       { N(gocio), N(gocio.bpay), asset(to_per_block_pay), "fund per-block bucket" } );
-
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
-                                                       { N(gocio), N(gocio.vpay), asset(to_per_vote_pay), "fund per-vote bucket" } );
-
-         _gstate.pervote_bucket  += to_per_vote_pay;
-         _gstate.perblock_bucket += to_per_block_pay;
-
-         //as EOS, use these buckets for tokens counting
-         _gstate.goc_gn_bucket    += to_gns;
-         _gstate.goc_voter_bucket += to_voters;
-
-         _gstate.last_pervote_bucket_fill = ct;
-      }
 
       //GOC cal vote rewards every 24H/max_shard
       if ( time_now >= _gstate.last_voter_bucket_empty + seconds_per_day / _gstate.max_shard ) {
@@ -165,7 +118,8 @@ namespace eosiosystem {
              account_name reward_to;
              int64_t reward_stake;
 
-             if( (voter.staked > 100'000'0000 || voter.proxied_vote_stake >100'000'0000 )
+             if( (voter.producers.size() != 0)
+              && (voter.staked >= 100'000'0000 || voter.proxied_vote_stake >= 100'000'0000 )
               && ( get_name_hash(voter.owner) % _gstate.max_shard == _gstate.curr_index ) ) { //100 000 GOC
                 //proxy will take all proxied stake reward and its own stake reward
                 if(voter.proxy) {
@@ -221,6 +175,56 @@ namespace eosiosystem {
 
           _gstate.curr_index = (++ _gstate.curr_index) % _gstate.max_shard;
       }
+
+
+      const asset token_supply   = token( N(gocio.token)).get_supply(symbol_type(system_token_symbol).name() );
+      const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
+
+      if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
+         auto new_tokens = static_cast<int64_t>( (continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year) );
+         //GOC rules
+         //GOC give 1%(20% of new tokens) for voting
+         auto to_producers       = new_tokens / 5;
+         //GOC give 0.5%(10% of new tokens)  for voting
+         auto to_voters          = new_tokens / 10;
+         //GOC give 0.75%(15% of new tokens) for gn
+         auto to_gns             = new_tokens * 3 / 20;
+         //GOC save 2.75%(55% of new tokens) for worker plan system, means 11/20 saved
+         auto to_savings         = new_tokens - to_producers - to_voters - to_gns;
+
+         //remain the same as EOS
+         auto to_per_block_pay   = to_producers / 4;
+         auto to_per_vote_pay    = to_producers - to_per_block_pay;
+
+         INLINE_ACTION_SENDER(eosio::token, issue)( N(gocio.token), {{N(gocio),N(active)}},
+                                                    {N(gocio), asset(new_tokens), std::string("issue tokens for producer pay and savings")} );
+
+         //GOC add
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.vs), asset(to_voters), "fund voter bucket" } );
+         //GOC add
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.gns), asset(to_gns), "fund gn bucket" } );                                              
+         
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.saving), asset(to_savings), "unallocated inflation" } );
+
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.bpay), asset(to_per_block_pay), "fund per-block bucket" } );
+
+         INLINE_ACTION_SENDER(eosio::token, transfer)( N(gocio.token), {N(gocio),N(active)},
+                                                       { N(gocio), N(gocio.vpay), asset(to_per_vote_pay), "fund per-vote bucket" } );
+
+         _gstate.pervote_bucket  += to_per_vote_pay;
+         _gstate.perblock_bucket += to_per_block_pay;
+
+         //as EOS, use these buckets for tokens counting
+         _gstate.goc_gn_bucket    += to_gns;
+         _gstate.goc_voter_bucket += to_voters;
+
+         _gstate.last_pervote_bucket_fill = ct;
+      }
+
 
       // here EOS count the producer's unpaid block who claimrewards
       int64_t producer_per_block_pay = 0;

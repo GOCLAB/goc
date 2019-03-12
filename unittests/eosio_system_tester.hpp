@@ -346,6 +346,34 @@ public:
                         );
    }
 
+   action_result goc_lockbw( const account_name& from,
+                           const account_name&   receiver,
+                           const asset&          stake_net_quantity,
+                           const asset&          stake_cpu_quantity,
+                           const bool            transfer,
+                           const uint8_t         lock_type) {
+      return push_action( name(from), N(lockbw), mvo()
+                                               ("from", from)
+                                               ("receiver", receiver)
+                                               ("stake_net_quantity", stake_net_quantity)
+                                               ("stake_cpu_quantity", stake_cpu_quantity)
+                                               ("transfer", transfer)
+                                               ("lock_type", lock_type)
+                        );
+   }
+
+   action_result goc_unlockbw( const account_name&  owner,
+                              const account_name&   receiver,
+                              const uint32_t        lock_id,
+                              const bool            force_end) {
+         return push_action( name(owner), N(unlockbw), mvo()
+                                                ("owner", owner)
+                                                ("receiver", receiver)
+                                                ("lock_id", lock_id)
+                                                ("force_end", force_end)
+                           );
+   }
+
 
    static fc::variant_object producer_parameters_example( int n ) {
       return mutable_variant_object()
@@ -412,6 +440,16 @@ public:
       return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_reward_info", data, abi_serializer_max_time );
    }
 
+   fc::variant get_vote_rewards_info( const account_name& act, const uint64_t id ) {
+      vector<char> data = get_row_by_id( config::system_account_name, act, N(gocvrewards), id );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "goc_vote_reward_info", data, abi_serializer_max_time );
+   }
+
+   fc::variant get_lockband_info( const uint64_t id ) {
+      vector<char> data = get_row_by_id( config::system_account_name, config::system_account_name, N(lockband), id );
+      return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "locked_bandwidth_info", data, abi_serializer_max_time );
+   }
+
    fc::variant get_producer_info( const account_name& act ) {
       vector<char> data = get_row_by_account( config::system_account_name, config::system_account_name, N(producers), act );
       return data.empty() ? fc::variant() : abi_ser.binary_to_variant( "producer_info", data, abi_serializer_max_time );
@@ -454,6 +492,40 @@ public:
                                 ("quantity", amount)
                                 ("memo", "")
                                 );
+   }
+
+   uint32_t calc_lock_time_length(uint8_t lock_type)
+   {
+      uint32_t seconds_per_day = 24 * 3600;
+      if(lock_type == 1)
+         return seconds_per_day * 7;
+      else if(lock_type == 2)
+         return seconds_per_day * 30;
+      else if(lock_type == 3)
+         return seconds_per_day * 60;
+      else if(lock_type == 4)
+         return seconds_per_day * 90;
+      return 0;
+   }
+
+   uint64_t get_name_hash(uint64_t name)
+   {
+      return (((name & 0xff00000000000000ull) >> 56)
+            + ((name & 0x00ff000000000000ull) >> 48)
+            + ((name & 0x0000ff0000000000ull) >> 40)
+            + ((name & 0x000000ff00000000ull) >> 32)
+            + ((name & 0x00000000ff000000ull) >> 24)
+            + ((name & 0x0000000000ff0000ull) >> 16)
+            + ((name & 0x000000000000ff00ull) >> 8)
+            + ((name & 0x00000000000000ffull) >> 0));
+   }
+
+   int64_t calc_net_cpu_weight(asset net_quantity, asset cpu_quantity, uint8_t lock_type)
+   {
+      if (lock_type < 0 || lock_type > 4)
+         return 0;
+      double weight_coeff[] = {0, 0.25, 0.5, 1.0, 0.5};
+      return static_cast<int64_t>((net_quantity.get_amount() + cpu_quantity.get_amount()) * weight_coeff[lock_type]);
    }
 
    double stake2votes( asset stake ) {
