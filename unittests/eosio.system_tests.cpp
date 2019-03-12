@@ -2842,11 +2842,11 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
    const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
    const double secs_per_year   = 52 * 7 * 24 * 3600;
 
-   const asset large_asset = core_from_string("80.0000");
-   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
-   create_account_with_resources( N(defproducerb), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
-   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
-   create_account_with_resources( N(producvoterb), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   const asset large_asset = core_from_string("800.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(defproducerb), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvoterb), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
 
    issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
    issue( "bob111111111", core_from_string("100000.0000"),  config::system_account_name );
@@ -2861,12 +2861,12 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
    BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
    BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducerb)));
 
-   transfer( config::system_account_name, "producvotera", core_from_string("400000000.0000"), config::system_account_name);
-   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   transfer( config::system_account_name, "producvotera", core_from_string("4000000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("1000000000.0000"), core_from_string("1000000000.0000")));
    BOOST_REQUIRE_EQUAL(success(), vote( N(producvotera), { N(defproducera) }));
 
-   transfer( config::system_account_name, "producvoterb", core_from_string("400000000.0000"), config::system_account_name);
-   BOOST_REQUIRE_EQUAL(success(), stake("producvoterb", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   transfer( config::system_account_name, "producvoterb", core_from_string("4000000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvoterb", core_from_string("1000000000.0000"), core_from_string("1000000000.0000")));
    BOOST_REQUIRE_EQUAL(success(), vote( N(producvoterb), { N(defproducerb) }));
 
    BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
@@ -2889,6 +2889,7 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
       produce_block( fc::seconds( 5 * 60 ) );
 
       BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducerb), N(claimrewards), mvo()("owner", "defproducerb")));
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducerb), N(gnrewards), mvo()("owner", "defproducerb")));
 
       const auto     global_state      = get_global_state();
       const uint64_t claim_time        = global_state["last_pervote_bucket_fill"].as_uint64();
@@ -2922,6 +2923,7 @@ BOOST_FIXTURE_TEST_CASE(goc_reward_test, eosio_system_tester, * boost::unit_test
       // after 30 days, test stability
       produce_block( fc::days(30) );
       BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(gnrewards), mvo()("owner", "defproducera")));
 
       rewards = get_rewards_info( N(bob111111111), (uint64_t)0 );
       BOOST_REQUIRE_EQUAL(expected_to_gns, rewards["rewards"].as<asset>().get_amount());
@@ -2937,9 +2939,9 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
    const double usecs_per_year  = 52 * 7 * 24 * 3600 * 1000000ll;
    const double secs_per_year   = 52 * 7 * 24 * 3600;
 
-   const asset large_asset = core_from_string("80.0000");
-   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
-   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("1.0000"), false, large_asset, large_asset );
+   const asset large_asset = core_from_string("800.0000");
+   create_account_with_resources( N(defproducera), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+   create_account_with_resources( N(producvotera), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
 
    issue( "alice1111111", core_from_string("10000.0000"),  config::system_account_name );
    issue( "bob111111111", core_from_string("100000.0000"),  config::system_account_name );
@@ -2948,7 +2950,7 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
 
    BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_0", "pcontent_0", "url_0", "hash_0", 1 ) ); //pid = 0;
    BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_1", "pcontent_1", "url_1", "hash_1", 1 ) ); //pid = 1;
-   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_2", "pcontent_2", "url_2", "hash_2", 1 ) ); //pid = 1;
+   BOOST_REQUIRE_EQUAL( success(), goc_new_prop( "alice1111111", core_from_string("1000.0000"), "pname_2", "pcontent_2", "url_2", "hash_2", 1 ) ); //pid = 2;
    BOOST_REQUIRE_EQUAL( success(), goc_stake("bob111111111") );
    BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 0, true) );
    BOOST_REQUIRE_EQUAL( success(), goc_vote("bob111111111", 1, true) );
@@ -2964,8 +2966,8 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
    BOOST_REQUIRE_EQUAL(core_from_string("0.0000"), rewards_c_0["rewards"].as<asset>());
    
    BOOST_REQUIRE_EQUAL(success(), regproducer(N(defproducera)));
-   transfer( config::system_account_name, "producvotera", core_from_string("400000000.0000"), config::system_account_name);
-   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("100000000.0000"), core_from_string("100000000.0000")));
+   transfer( config::system_account_name, "producvotera", core_from_string("4000000000.0000"), config::system_account_name);
+   BOOST_REQUIRE_EQUAL(success(), stake("producvotera", core_from_string("1000000000.0000"), core_from_string("1000000000.0000")));
    BOOST_REQUIRE_EQUAL(success(), vote( N(producvotera), { N(defproducera) }));
 
    BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
@@ -2982,6 +2984,7 @@ BOOST_FIXTURE_TEST_CASE(goc_multiple_proposal_reward_test, eosio_system_tester, 
       const asset initial_supply  = get_token_supply();
 
       BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(claimrewards), mvo()("owner", "defproducera")));
+      BOOST_REQUIRE_EQUAL(success(), push_action(N(defproducera), N(gnrewards), mvo()("owner", "defproducera")));
 
       const auto     global_state      = get_global_state();
       const uint64_t claim_time        = global_state["last_pervote_bucket_fill"].as_uint64();

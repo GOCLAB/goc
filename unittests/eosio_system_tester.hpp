@@ -63,8 +63,8 @@ public:
       }
 
       create_currency( N(gocio.token), config::system_account_name, core_from_string("10000000000.0000") );
-      issue(config::system_account_name,      core_from_string("1000000000.0000"));
-      BOOST_REQUIRE_EQUAL( core_from_string("1000000000.0000"), get_balance( "gocio" ) );
+      issue(config::system_account_name,      core_from_string("9000000000.0000"));
+      BOOST_REQUIRE_EQUAL( core_from_string("9000000000.0000"), get_balance( "gocio" ) );
 
       set_code( config::system_account_name, eosio_system_wast );
       set_abi( config::system_account_name, eosio_system_abi );
@@ -78,11 +78,12 @@ public:
 
       produce_blocks();
 
-      create_account_with_resources( N(alice1111111), config::system_account_name, core_from_string("1.0000"), false );
-      create_account_with_resources( N(bob111111111), config::system_account_name, core_from_string("0.4500"), false );
-      create_account_with_resources( N(carol1111111), config::system_account_name, core_from_string("1.0000"), false );
+      const asset large_asset = core_from_string("800.0000");
+      create_account_with_resources( N(alice1111111), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+      create_account_with_resources( N(bob111111111), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
+      create_account_with_resources( N(carol1111111), config::system_account_name, core_from_string("100.0000"), false, large_asset, large_asset );
 
-      BOOST_REQUIRE_EQUAL( core_from_string("1000000000.0000"), get_balance("gocio")  + get_balance("gocio.ramfee") + get_balance("gocio.stake") + get_balance("gocio.ram") );
+      BOOST_REQUIRE_EQUAL( core_from_string("9000000000.0000"), get_balance("gocio")  + get_balance("gocio.ramfee") + get_balance("gocio.stake") + get_balance("gocio.ram") );
    }
 
 
