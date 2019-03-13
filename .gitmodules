@@ -29,5 +29,5 @@
 	url = http://github.com/EOSIO/wabt
 [submodule "libraries/fc"]
 	path = libraries/fc
-	url = git@github.com:BlockchainLabFudan/fc.git
-	branch = eos
+	url = https://github.com/GOCLAB/fc.git
+	branch = goc
