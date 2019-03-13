@@ -95,6 +95,13 @@ void system_contract::gocnewprop(const account_name owner, asset fee, const std:
     require_auth(owner);
     auto time_now = now();
 
+
+    //TESTNET CODE
+    //eosio_assert(start_type < 2, "available value for stage is (0-4), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled");
+
+    //MAINNET CODE
+    eosio_assert(start_type <= 1, "available value for stage is (1), 0:new, 1:voting, 2:bp voting, 3:ended, 4:settled");
+
     eosio_assert(pname.size() < 512, "name too long");
     eosio_assert(pcontent.size() < 1024, "content too long");
     eosio_assert(url.size() < 512, "url too long");

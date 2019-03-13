@@ -40,11 +40,12 @@ namespace eosiosystem {
       time          goc_stake_freeze = 0;
       asset         locked_net = asset(0);
       asset         locked_cpu = asset(0);
+      uint32_t      last_action_time = 0;
 
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake)(goc_stake_freeze)(locked_net)(locked_cpu) )
+      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(governance_stake)(goc_stake_freeze)(locked_net)(locked_cpu)(last_action_time) )
    };
 
 
