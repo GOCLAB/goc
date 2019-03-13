@@ -272,7 +272,7 @@
          {"name":"cpu_weight", "type":"asset"}
       ]
     },{
-      "name": "locked_bandwidth",
+      "name": "locked_bandwidth_info",
       "base": "",
       "fields": [
          {"name":"id", "type":"uint64"},
@@ -280,8 +280,8 @@
          {"name":"lock_type", "type":"uint8"},
          {"name":"lock_time", "type":"time_point_sec"},
          {"name":"lock_end_time", "type":"time_point_sec"},
-         {"name":"net_weight", "type":"asset"},
-         {"name":"cpu_weight", "type":"asset"},
+         {"name":"net_amount", "type":"asset"},
+         {"name":"cpu_amount", "type":"asset"},
          {"name":"net_cpu_weight", "type":"int64"},
          {"name":"reward_bucket", "type":"int64"},
          {"name":"voting", "type":"bool"},
@@ -806,7 +806,7 @@
       "key_types" : ["uint64"]
     },{
       "name": "lockband",
-      "type": "locked_bandwidth",
+      "type": "locked_bandwidth_info",
       "index_type": "i64",
       "key_names" : ["id"],
       "key_types" : ["uint64"]
