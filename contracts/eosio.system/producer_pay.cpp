@@ -119,8 +119,8 @@ namespace eosiosystem {
              int64_t reward_stake;
 
              if( (voter.producers.size() != 0)
-              && (voter.staked >= 100'000'0000 || voter.proxied_vote_stake >= 100'000'0000 )
-              && ( get_name_hash(voter.owner) % _gstate.max_shard == _gstate.curr_index ) ) { //100 000 GOC
+              && (voter.staked >= 20'000'0000 || voter.proxied_vote_stake >= 20'000'0000 )
+              && ( get_name_hash(voter.owner) % _gstate.max_shard == _gstate.curr_index ) ) { //20 000 GOC
                 //proxy will take all proxied stake reward and its own stake reward
                 if(voter.proxy) {
                    reward_to = 0;
@@ -236,7 +236,7 @@ namespace eosiosystem {
       if( _gstate.total_producer_vote_weight > 0 ) {
          producer_per_vote_pay  = int64_t((_gstate.pervote_bucket * prod.total_votes ) / _gstate.total_producer_vote_weight);
       }
-      if( producer_per_vote_pay < min_pervote_daily_pay ) {
+      if( producer_per_vote_pay < min_pervote_daily_pay / _gstate.max_shard ) {
          producer_per_vote_pay = 0;
       }
       _gstate.pervote_bucket      -= producer_per_vote_pay;
